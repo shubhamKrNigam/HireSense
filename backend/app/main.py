@@ -1,5 +1,9 @@
 from fastapi import FastAPI
 
+from app.db.base import Base
+from app.db.session import engine
+
+
 app = FastAPI(
     title="HireSense API",
     description="AI-powered recruitment and job matching platform",
@@ -7,16 +11,20 @@ app = FastAPI(
 )
 
 
+@app.on_event("startup")
+def startup():
+    Base.metadata.create_all(bind=engine)
+
+
 @app.get("/")
 def root():
     return {
-        "message": "Welcome to HireSense API",
-        "status": "running",
+        "message": "Welcome to HireSense API"
     }
 
 
 @app.get("/health")
 def health_check():
     return {
-        "status": "healthy",
+        "status": "healthy"
     }
