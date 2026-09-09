@@ -3,7 +3,7 @@ from pydantic import BaseModel, HttpUrl
 
 class CompanyBase(BaseModel):
     name: str
-    description: str | None = None
+    industry: str | None = None
     location: str | None = None
     website: HttpUrl | None = None
 
@@ -14,6 +14,7 @@ class CompanyCreate(CompanyBase):
 
 class CompanyResponse(CompanyBase):
     id: int
+    created_by: int | None = None
 
     class Config:
         from_attributes = True

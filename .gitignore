@@ -46,3 +46,9 @@ Thumbs.db
 # Secrets
 *.pem
 *.key
+
+# User-uploaded files
+backend/uploads/
+
+# Test/sample uploaded documents
+backend/test_resume.pdf

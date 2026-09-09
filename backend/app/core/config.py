@@ -1,12 +1,27 @@
-from pathlib import Path
+import os
 
+from dotenv import load_dotenv
 
-BASE_DIR = Path(__file__).resolve().parents[3]
+load_dotenv()
 
-DATABASE_PATH = BASE_DIR / "database" / "hiresense.db"
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "sqlite:///../database/hiresense.db",
+)
 
-DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
+SECRET_KEY = os.getenv(
+    "SECRET_KEY",
+    "dev-secret-key-change-this",
+)
 
-APP_NAME = "HireSense API"
-APP_VERSION = "0.1.0"
-APP_DESCRIPTION = "AI-powered recruitment and job matching platform"
+ALGORITHM = os.getenv(
+    "ALGORITHM",
+    "HS256",
+)
+
+ACCESS_TOKEN_EXPIRE_MINUTES = int(
+    os.getenv(
+        "ACCESS_TOKEN_EXPIRE_MINUTES",
+        "60",
+    )
+)

@@ -1,8 +1,13 @@
+from datetime import datetime
+from typing import Literal
+
 from pydantic import BaseModel, EmailStr
 
 
 class UserBase(BaseModel):
+    name: str
     email: EmailStr
+    role: Literal["candidate", "recruiter", "admin"]
 
 
 class UserCreate(UserBase):
@@ -11,7 +16,8 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     id: int
-    is_active: bool
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     class Config:
         from_attributes = True
