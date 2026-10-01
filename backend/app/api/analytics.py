@@ -41,29 +41,23 @@ def get_analytics_overview(
 
     if current_user.role == "admin":
         jobs = db.query(Job).all()
-
     else:
         company_ids = [
             company.id
             for company in (
                 db.query(Company)
-                .filter(
-                    Company.created_by == current_user.id
-                )
+                .filter(Company.created_by == current_user.id)
                 .all()
             )
         ]
 
-        if company_ids:
-            jobs = (
-                db.query(Job)
-                .filter(
-                    Job.company_id.in_(company_ids)
-                )
-                .all()
-            )
-        else:
-            jobs = []
+        jobs = (
+            db.query(Job)
+            .filter(Job.company_id.in_(company_ids))
+            .all()
+            if company_ids
+            else []
+        )
 
     job_ids = {job.id for job in jobs}
 
@@ -71,139 +65,206 @@ def get_analytics_overview(
     # 2. Applications
     # -----------------------------------------------------
 
-    if job_ids:
-        applications = (
-            db.query(Application)
-            .filter(
-                Application.job_id.in_(job_ids)
-            )
-            .all()
-        )
-    else:
-        applications = []
+    applications = (
+        db.query(Application)
+        .filter(Application.job_id.in_(job_ids))
+        .all()
+        if job_ids
+        else []
+    )
 
     total_applications = len(applications)
-
     status_distribution = Counter(
-        application.status
-        for application in applications
+        application.status for application in applications
     )
 
     # -----------------------------------------------------
-    # 3. Matching analytics
+    # 3. Calculate each application once
     # -----------------------------------------------------
 
+    application_matches = {}
     eligible_count = 0
     ineligible_count = 0
     match_scores = []
+    match_band_counts = {
+        "strong": 0,
+        "good": 0,
+        "needs_attention": 0,
+    }
+
+    missing_skill_counter = Counter()
+    missing_required_skill_counter = Counter()
 
     for application in applications:
-
         match = calculate_match(
             application.candidate_id,
             application.job_id,
             db,
         )
+        application_matches[application.id] = match
 
-        match_scores.append(
-            match["match_score"]
-        )
+        score = float(match.get("match_score", 0) or 0)
+        match_scores.append(score)
 
-        if match["eligible"]:
+        if score >= 80:
+            match_band_counts["strong"] += 1
+        elif score >= 60:
+            match_band_counts["good"] += 1
+        else:
+            match_band_counts["needs_attention"] += 1
+
+        if match.get("eligible"):
             eligible_count += 1
         else:
             ineligible_count += 1
 
+        # Aggregate actual skill gaps from the same matching engine
+        # used by the recruiter application ranking.
+        for skill_id in match.get("missing_skills", []):
+            missing_skill_counter[skill_id] += 1
+
+        for skill_id in match.get("missing_required_skills", []):
+            missing_required_skill_counter[skill_id] += 1
+
     average_match_score = (
-        round(
-            sum(match_scores)
-            / len(match_scores),
-            2,
-        )
+        round(sum(match_scores) / len(match_scores), 2)
         if match_scores
         else 0.0
     )
 
     # -----------------------------------------------------
-    # 4. Job statistics
+    # 4. Resolve skill IDs to names
+    # -----------------------------------------------------
+
+    relevant_skill_ids = set(missing_skill_counter) | set(
+        missing_required_skill_counter
+    )
+
+    if relevant_skill_ids:
+        relevant_skills = (
+            db.query(Skill)
+            .filter(Skill.id.in_(relevant_skill_ids))
+            .all()
+        )
+    else:
+        relevant_skills = []
+
+    skill_names = {skill.id: skill.name for skill in relevant_skills}
+
+    top_skill_gaps = [
+        {
+            "skill": skill_names.get(skill_id, str(skill_id)),
+            "applicant_count": count,
+            "required_gap_count": missing_required_skill_counter.get(
+                skill_id, 0
+            ),
+        }
+        for skill_id, count in missing_skill_counter.most_common(10)
+    ]
+
+    required_skill_gaps = [
+        {
+            "skill": skill_names.get(skill_id, str(skill_id)),
+            "applicant_count": count,
+        }
+        for skill_id, count in missing_required_skill_counter.most_common(8)
+    ]
+
+    # -----------------------------------------------------
+    # 5. Role-level intelligence
     # -----------------------------------------------------
 
     job_statistics = []
 
     for job in jobs:
-
         job_applications = [
             application
             for application in applications
             if application.job_id == job.id
         ]
 
-        scores = []
+        role_scores = [
+            float(application_matches[application.id].get("match_score", 0) or 0)
+            for application in job_applications
+        ]
 
-        for application in job_applications:
+        role_eligible = sum(
+            1
+            for application in job_applications
+            if application_matches[application.id].get("eligible")
+        )
+        role_strong = sum(score >= 80 for score in role_scores)
+        role_good = sum(60 <= score < 80 for score in role_scores)
+        role_attention = sum(score < 60 for score in role_scores)
 
-            match = calculate_match(
-                application.candidate_id,
-                application.job_id,
-                db,
-            )
-
-            scores.append(
-                match["match_score"]
-            )
+        role_status_counts = Counter(
+            application.status for application in job_applications
+        )
 
         job_statistics.append(
             {
                 "job_id": job.id,
                 "job_title": job.title,
-                "application_count": len(
-                    job_applications
-                ),
+                "application_count": len(job_applications),
                 "average_match_score": (
-                    round(
-                        sum(scores)
-                        / len(scores),
-                        2,
-                    )
-                    if scores
+                    round(sum(role_scores) / len(role_scores), 2)
+                    if role_scores
                     else 0.0
                 ),
+                "eligible_count": role_eligible,
+                "eligibility_rate": (
+                    round((role_eligible / len(job_applications)) * 100, 2)
+                    if job_applications
+                    else 0.0
+                ),
+                "strong_match_count": role_strong,
+                "good_match_count": role_good,
+                "needs_attention_count": role_attention,
+                "shortlisted_count": role_status_counts.get("shortlisted", 0),
+                "interview_count": role_status_counts.get("interview", 0),
+                "selected_count": role_status_counts.get("selected", 0),
+                "rejected_count": role_status_counts.get("rejected", 0),
             }
         )
 
     job_statistics.sort(
-        key=lambda item: item["application_count"],
+        key=lambda item: (
+            item["application_count"] > 0,
+            item["average_match_score"],
+            item["application_count"],
+        ),
         reverse=True,
     )
 
+    populated_roles = [
+        job for job in job_statistics if job["application_count"] > 0
+    ]
+
+    best_role = (
+        max(populated_roles, key=lambda item: item["average_match_score"])
+        if populated_roles
+        else None
+    )
+    attention_role = (
+        min(populated_roles, key=lambda item: item["average_match_score"])
+        if populated_roles
+        else None
+    )
+
     # -----------------------------------------------------
-    # 5. Top applicant skills
+    # 6. Top applicant skills
     # -----------------------------------------------------
 
     skill_counter = Counter()
-
     candidate_ids = {
-        application.candidate_id
-        for application in applications
+        application.candidate_id for application in applications
     }
 
     if candidate_ids:
-
         candidate_skills = (
-            db.query(
-                CandidateSkill,
-                Skill,
-            )
-            .join(
-                Skill,
-                CandidateSkill.skill_id
-                == Skill.id,
-            )
-            .filter(
-                CandidateSkill.candidate_id.in_(
-                    candidate_ids
-                )
-            )
+            db.query(CandidateSkill, Skill)
+            .join(Skill, CandidateSkill.skill_id == Skill.id)
+            .filter(CandidateSkill.candidate_id.in_(candidate_ids))
             .all()
         )
 
@@ -211,17 +272,52 @@ def get_analytics_overview(
             skill_counter[skill.name] += 1
 
     top_skills = [
-        {
-            "skill": skill_name,
-            "applicant_count": count,
-        }
-        for skill_name, count in
-        skill_counter.most_common(10)
+        {"skill": skill_name, "applicant_count": count}
+        for skill_name, count in skill_counter.most_common(10)
     ]
 
     # -----------------------------------------------------
-    # 6. Final response
+    # 7. Actionable intelligence summary
     # -----------------------------------------------------
+
+    strong_count = match_band_counts["strong"]
+    attention_count = match_band_counts["needs_attention"]
+
+    if best_role:
+        best_role_signal = (
+            f"{best_role['job_title']} has the strongest candidate alignment "
+            f"at {best_role['average_match_score']}% average match."
+        )
+    else:
+        best_role_signal = "Role-level candidate signals will appear as applications arrive."
+
+    if attention_role and attention_role["job_id"] != (best_role or {}).get("job_id"):
+        attention_role_signal = (
+            f"{attention_role['job_title']} has the lowest current role match "
+            f"at {attention_role['average_match_score']}%; review its candidate gaps."
+        )
+    elif attention_count:
+        attention_role_signal = (
+            f"{attention_count} applicant{'s' if attention_count != 1 else ''} "
+            "currently fall below the 60% match threshold."
+        )
+    else:
+        attention_role_signal = "No applicant currently falls below the 60% match threshold."
+
+    if strong_count:
+        hiring_signal = (
+            f"{strong_count} applicant{'s' if strong_count != 1 else ''} "
+            f"show strong role alignment, while {attention_count} "
+            f"need attention. {best_role_signal}"
+        )
+    elif attention_count:
+        hiring_signal = (
+            f"No applicant currently reaches the 80% strong-match threshold. "
+            f"{attention_count} applicant{'s' if attention_count != 1 else ''} "
+            f"need attention. {best_role_signal}"
+        )
+    else:
+        hiring_signal = best_role_signal
 
     return {
         "total_jobs": len(jobs),
@@ -229,11 +325,17 @@ def get_analytics_overview(
         "average_match_score": average_match_score,
         "eligible_applications": eligible_count,
         "ineligible_applications": ineligible_count,
-        "status_distribution": dict(
-            status_distribution
-        ),
+        "match_band_counts": match_band_counts,
+        "status_distribution": dict(status_distribution),
         "top_applicant_skills": top_skills,
+        "top_skill_gaps": top_skill_gaps,
+        "required_skill_gaps": required_skill_gaps,
         "job_statistics": job_statistics,
+        "best_role": best_role,
+        "attention_role": attention_role,
+        "hiring_signal": hiring_signal,
+        "best_role_signal": best_role_signal,
+        "attention_role_signal": attention_role_signal,
     }
 
 

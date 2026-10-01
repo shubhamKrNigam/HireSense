@@ -7,7 +7,7 @@ from pydantic import BaseModel, EmailStr
 class UserBase(BaseModel):
     name: str
     email: EmailStr
-    role: Literal["candidate", "recruiter", "admin"]
+    role: Literal["candidate", "recruiter","placement_officer", "admin"]
 
 
 class UserCreate(UserBase):

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
+  ArrowUpRight,
   BriefcaseBusiness,
   CalendarDays,
   CheckCircle2,
@@ -9,6 +11,7 @@ import {
   RefreshCw,
   Search,
   XCircle,
+  Target,
 } from 'lucide-react'
 
 import AppShell from '../../components/layout/AppShell'
@@ -66,7 +69,20 @@ function getStatusMeta(status) {
   )
 }
 
+function getMatchScore(application) {
+  const value = application?.match_score
+  if (value == null || !Number.isFinite(Number(value))) return null
+  return Math.min(Math.max(Number(value), 0), 100)
+}
+
+function getEligibility(application) {
+  if (typeof application?.eligible === 'boolean') return application.eligible
+  if (typeof application?.eligibility === 'boolean') return application.eligibility
+  return null
+}
+
 function ApplicationsPage() {
+  const navigate = useNavigate()
   const { user } = useAuth()
 
   const [applications, setApplications] = useState([])
@@ -452,6 +468,71 @@ function ApplicationsPage() {
             gap: 6px;
           }
 
+          .hs-application-intelligence {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 14px 0 0 59px;
+          }
+
+          .hs-application-fit {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            min-height: 32px;
+            padding: 0 10px;
+            border: 1px solid #ebe5f4;
+            border-radius: 9px;
+            background: #faf9fd;
+            color: #665e70;
+            font-size: 12px;
+            font-weight: 700;
+          }
+
+          .hs-application-fit svg {
+            color: #7563c7;
+          }
+
+          .hs-application-fit strong {
+            color: #5646b5;
+          }
+
+          .hs-application-eligibility {
+            display: inline-flex;
+            align-items: center;
+            min-height: 32px;
+            padding: 0 10px;
+            border-radius: 9px;
+            font-size: 12px;
+            font-weight: 800;
+          }
+
+          .hs-application-eligibility.eligible {
+            background: #eef8f2;
+            color: #28785a;
+            border: 1px solid #dcefe4;
+          }
+
+          .hs-application-eligibility.review {
+            background: #fff7e8;
+            color: #9a6b17;
+            border: 1px solid #f2e3c1;
+          }
+
+          .hs-application-actions {
+            display: inline-flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+          }
+
+          .hs-application-view-button {
+            border: 0;
+            background: transparent;
+            cursor: pointer;
+          }
+
           .hs-application-footer {
             display: flex;
             justify-content: space-between;
@@ -497,6 +578,10 @@ function ApplicationsPage() {
           }
 
           @media (max-width: 820px) {
+            .hs-application-intelligence {
+              margin-left: 0;
+            }
+
             .hs-applications-page {
               padding: 26px 18px 45px;
             }
@@ -698,12 +783,53 @@ function ApplicationsPage() {
                     </span>
                   </div>
 
+                  {(getMatchScore(application) !== null ||
+                    getEligibility(application) !== null) && (
+                    <div className="hs-application-intelligence">
+                      {getMatchScore(application) !== null && (
+                        <div className="hs-application-fit">
+                          <Target size={14} />
+                          <span>HireSense match</span>
+                          <strong>
+                            {Math.round(getMatchScore(application))}%
+                          </strong>
+                        </div>
+                      )}
+
+                      {getEligibility(application) !== null && (
+                        <span
+                          className={`hs-application-eligibility ${
+                            getEligibility(application)
+                              ? 'eligible'
+                              : 'review'
+                          }`}
+                        >
+                          {getEligibility(application)
+                            ? 'Eligible'
+                            : 'Eligibility review'}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   <div className="hs-application-footer">
                     <span className="hs-application-date">
                       Application ID #{application.id}
                     </span>
 
-                    {job?.application_url && (
+                    <div className="hs-application-actions">
+                      {job?.id && (
+                        <button
+                          type="button"
+                          className="hs-application-link hs-application-view-button"
+                          onClick={() => navigate(`/candidate/jobs/${job.id}`)}
+                        >
+                          View opportunity
+                          <ArrowUpRight size={14} />
+                        </button>
+                      )}
+
+                      {job?.application_url && (
                       <a
                         className="hs-application-link"
                         href={job.application_url}
@@ -713,7 +839,8 @@ function ApplicationsPage() {
                         External application
                         <ExternalLink size={14} />
                       </a>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </article>
               )

@@ -7,11 +7,13 @@ import {
   Mail,
   Sparkles,
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../../context/AuthContext'
 
 function LoginPage() {
   const { login } = useAuth()
+  const navigate = useNavigate()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -27,18 +29,49 @@ function LoginPage() {
     setLoading(true)
 
     try {
-      const data = await login(email, password)
+      const data = await login(
+        email.trim(),
+        password,
+      )
 
-      if (data.role === 'candidate') {
-        window.location.href = '/candidate'
-      } else if (data.role === 'recruiter') {
-        window.location.href = '/recruiter'
-      } else {
-        window.location.href = '/'
+      /*
+       * Role-based navigation
+       */
+      switch (data.role) {
+        case 'candidate':
+          navigate('/candidate', {
+            replace: true,
+          })
+          break
+
+        case 'recruiter':
+          navigate('/recruiter', {
+            replace: true,
+          })
+          break
+
+        case 'placement_officer':
+          navigate('/placement-officer', {
+            replace: true,
+          })
+          break
+
+        case 'admin':
+          navigate('/admin', {
+            replace: true,
+          })
+          break
+
+        default:
+          setError(
+            'Your account has an unsupported role.',
+          )
+          break
       }
     } catch (err) {
       const message =
         err.response?.data?.detail ||
+        err.message ||
         'Unable to sign in. Please check your credentials.'
 
       setError(message)
@@ -57,7 +90,9 @@ function LoginPage() {
 
       <div className="hs-login-layout">
 
-        {/* Left branding panel */}
+        {/* ================================================= */}
+        {/* LEFT BRANDING PANEL */}
+        {/* ================================================= */}
 
         <section className="hs-login-intro">
 
@@ -84,8 +119,9 @@ function LoginPage() {
             </h1>
 
             <p>
-              Discover opportunities matched to your skills,
-              experience, education, and career profile.
+              Discover opportunities matched to your
+              skills, experience, education, and career
+              profile.
             </p>
           </div>
 
@@ -95,17 +131,22 @@ function LoginPage() {
             </div>
 
             <div>
-              <strong>Explainable matching</strong>
+              <strong>
+                Explainable matching
+              </strong>
+
               <span>
-                Understand exactly why an opportunity matches
-                your profile.
+                Understand exactly why an opportunity
+                matches your profile.
               </span>
             </div>
           </div>
 
         </section>
 
-        {/* Login card */}
+        {/* ================================================= */}
+        {/* LOGIN CARD */}
+        {/* ================================================= */}
 
         <section className="hs-login-card">
 
@@ -118,35 +159,54 @@ function LoginPage() {
           </div>
 
           <div className="hs-login-header">
+
             <span className="hs-login-card-eyebrow">
               Welcome back
             </span>
 
-            <h2>Sign in to your workspace</h2>
+            <h2>
+              Sign in to your workspace
+            </h2>
 
             <p>
-              Continue to your personalized HireSense
-              experience.
+              Continue to your personalized
+              HireSense experience.
             </p>
+
           </div>
 
+          {/* ================================================= */}
+          {/* ERROR */}
+          {/* ================================================= */}
+
           {error && (
-            <div className="hs-login-error">
+            <div
+              className="hs-login-error"
+              role="alert"
+            >
               {error}
             </div>
           )}
+
+          {/* ================================================= */}
+          {/* LOGIN FORM */}
+          {/* ================================================= */}
 
           <form
             className="hs-login-form"
             onSubmit={handleSubmit}
           >
 
+            {/* EMAIL */}
+
             <div className="hs-field">
+
               <label htmlFor="email">
                 Email address
               </label>
 
               <div className="hs-input-wrapper">
+
                 <Mail size={17} />
 
                 <input
@@ -159,16 +219,23 @@ function LoginPage() {
                   placeholder="you@example.com"
                   autoComplete="email"
                   required
+                  disabled={loading}
                 />
+
               </div>
+
             </div>
 
+            {/* PASSWORD */}
+
             <div className="hs-field">
+
               <label htmlFor="password">
                 Password
               </label>
 
               <div className="hs-input-wrapper">
+
                 <LockKeyhole size={17} />
 
                 <input
@@ -185,6 +252,7 @@ function LoginPage() {
                   placeholder="Enter your password"
                   autoComplete="current-password"
                   required
+                  disabled={loading}
                 />
 
                 <button
@@ -200,6 +268,7 @@ function LoginPage() {
                       ? 'Hide password'
                       : 'Show password'
                   }
+                  disabled={loading}
                 >
                   {showPassword ? (
                     <EyeOff size={17} />
@@ -207,14 +276,19 @@ function LoginPage() {
                     <Eye size={17} />
                   )}
                 </button>
+
               </div>
+
             </div>
+
+            {/* SUBMIT */}
 
             <button
               type="submit"
               className="hs-login-button"
               disabled={loading}
             >
+
               {loading ? (
                 <span className="hs-button-loader">
                   Signing in...
@@ -225,6 +299,7 @@ function LoginPage() {
                   <ArrowRight size={17} />
                 </>
               )}
+
             </button>
 
           </form>
@@ -238,6 +313,7 @@ function LoginPage() {
         </section>
 
       </div>
+
     </div>
   )
 }

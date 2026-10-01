@@ -60,6 +60,7 @@ function JobDetailsPage() {
   const [skills, setSkills] = useState([])
   const [existingApplication, setExistingApplication] =
     useState(null)
+  const [skillGapData, setSkillGapData] = useState(null)
 
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
@@ -80,9 +81,13 @@ function JobDetailsPage() {
         const [
           jobResponse,
           applicationsResponse,
+          skillGapResponse,
         ] = await Promise.all([
           api.get(`/jobs/${jobId}`),
           api.get('/applications/me'),
+          api
+            .get(`/skill-gaps/candidate/job/${jobId}`)
+            .catch(() => ({ data: null })),
         ])
 
         const jobData = jobResponse.data
@@ -93,6 +98,7 @@ function JobDetailsPage() {
           : []
 
         setJob(jobData)
+        setSkillGapData(skillGapResponse?.data || null)
 
         const currentApplication = applications.find(
           (application) =>
@@ -178,6 +184,39 @@ function JobDetailsPage() {
         )
       })
   }, [jobSkills, skills])
+
+  const readinessSummary = useMemo(() => {
+    const analysis = Array.isArray(skillGapData?.skill_analysis)
+      ? skillGapData.skill_analysis
+      : []
+
+    const strong = analysis.filter(
+      (item) => item.status === 'strong'
+    )
+    const developing = analysis.filter(
+      (item) => item.status === 'developing'
+    )
+    const missing = analysis.filter(
+      (item) => item.status === 'missing'
+    )
+    const highPriority = analysis.filter(
+      (item) =>
+        item.priority === 'high' ||
+        (item.status === 'missing' && item.required)
+    )
+
+    return {
+      analysis,
+      strong,
+      developing,
+      missing,
+      highPriority,
+      score:
+        skillGapData?.skill_gap_score != null
+          ? Number(skillGapData.skill_gap_score)
+          : null,
+    }
+  }, [skillGapData])
 
   async function handleApply() {
     if (!job) return
@@ -433,6 +472,107 @@ function JobDetailsPage() {
               </section>
             )}
 
+            {skillGapData && readinessSummary.analysis.length > 0 && (
+              <section style={styles.contentCard}>
+                <div style={styles.sectionKicker}>
+                  HIRESENSE INTELLIGENCE
+                </div>
+                <div style={styles.readinessHeader}>
+                  <div>
+                    <h2 style={styles.sectionTitle}>
+                      Skill readiness
+                    </h2>
+                    <p style={styles.readinessIntro}>
+                      See how your existing evidence aligns with the skills
+                      this opportunity needs.
+                    </p>
+                  </div>
+
+                  {readinessSummary.score != null && (
+                    <div style={styles.readinessScore}>
+                      <span style={styles.readinessScoreValue}>
+                        {readinessSummary.score.toFixed(0)}%
+                      </span>
+                      <span style={styles.readinessScoreLabel}>
+                        skill readiness
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div style={styles.readinessStats}>
+                  <ReadinessStat
+                    label="Strong"
+                    value={readinessSummary.strong.length}
+                    background="#e9f7f0"
+                    color="#28785a"
+                  />
+                  <ReadinessStat
+                    label="Developing"
+                    value={readinessSummary.developing.length}
+                    background="#fff4dc"
+                    color="#9a6b17"
+                  />
+                  <ReadinessStat
+                    label="Missing"
+                    value={readinessSummary.missing.length}
+                    background="#fff0ed"
+                    color="#ad4939"
+                  />
+                  <ReadinessStat
+                    label="Priority gaps"
+                    value={readinessSummary.highPriority.length}
+                    background="#eee8ff"
+                    color="#6f5bc4"
+                  />
+                </div>
+
+                <div style={styles.readinessGroups}>
+                  <SkillReadinessGroup
+                    title="Strong skills"
+                    skills={readinessSummary.strong}
+                    emptyText="No skills are currently classified as strong for this role."
+                    tone="strong"
+                  />
+                  <SkillReadinessGroup
+                    title="Developing skills"
+                    skills={readinessSummary.developing}
+                    emptyText="No developing skills were identified."
+                    tone="developing"
+                  />
+                  <SkillReadinessGroup
+                    title="Missing skills"
+                    skills={readinessSummary.missing}
+                    emptyText="No unsupported skills were identified."
+                    tone="missing"
+                  />
+                </div>
+
+                {readinessSummary.highPriority.length > 0 && (
+                  <div style={styles.priorityBox}>
+                    <div style={styles.priorityTitle}>
+                      What to improve first
+                    </div>
+                    <p style={styles.priorityText}>
+                      Focus on the high-priority gaps below, especially when
+                      they are required skills for this opportunity.
+                    </p>
+                    <div style={styles.prioritySkills}>
+                      {readinessSummary.highPriority.map((item) => (
+                        <span
+                          key={`priority-${item.skill_id}`}
+                          style={styles.priorityChip}
+                        >
+                          {item.skill}
+                          {item.required ? ' · Required' : ''}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
+
             <section style={styles.contentCard}>
               <div style={styles.sectionKicker}>
                 ELIGIBILITY
@@ -627,6 +767,103 @@ function JobDetailsPage() {
         </div>
       </div>
     </AppShell>
+  )
+}
+
+
+function ReadinessStat({
+  label,
+  value,
+  background,
+  color,
+}) {
+  return (
+    <div
+      style={{
+        ...styles.readinessStat,
+        background,
+        color,
+      }}
+    >
+      <strong style={styles.readinessStatValue}>
+        {value}
+      </strong>
+      <span style={styles.readinessStatLabel}>
+        {label}
+      </span>
+    </div>
+  )
+}
+
+function SkillReadinessGroup({
+  title,
+  skills,
+  emptyText,
+  tone,
+}) {
+  const toneStyles = {
+    strong: {
+      background: '#e9f7f0',
+      color: '#28785a',
+      border: '#d9eee3',
+    },
+    developing: {
+      background: '#fff4dc',
+      color: '#9a6b17',
+      border: '#f1e2bd',
+    },
+    missing: {
+      background: '#fff0ed',
+      color: '#ad4939',
+      border: '#f1d7d1',
+    },
+  }
+
+  const currentTone =
+    toneStyles[tone] || toneStyles.strong
+
+  return (
+    <div style={styles.readinessGroup}>
+      <div style={styles.readinessGroupTitle}>
+        {title}
+      </div>
+
+      {skills.length > 0 ? (
+        <div style={styles.readinessSkillList}>
+          {skills.map((item) => (
+            <div
+              key={`${tone}-${item.skill_id}`}
+              style={{
+                ...styles.readinessSkill,
+                background: currentTone.background,
+                borderColor: currentTone.border,
+              }}
+            >
+              <span
+                style={{
+                  ...styles.readinessSkillDot,
+                  background: currentTone.color,
+                }}
+              />
+              <div style={styles.readinessSkillContent}>
+                <strong style={styles.readinessSkillName}>
+                  {item.skill}
+                </strong>
+                <span style={styles.readinessSkillMeta}>
+                  {item.required ? 'Required' : 'Preferred'}
+                  {' · '}
+                  {item.evidence_score}% evidence
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={styles.readinessEmpty}>
+          {emptyText}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -825,6 +1062,181 @@ const styles = {
     marginTop: '3px',
     color: '#9299a8',
     fontSize: '10px',
+  },
+
+  readinessHeader: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: '18px',
+    marginBottom: '16px',
+  },
+
+  readinessIntro: {
+    margin: '-6px 0 0',
+    maxWidth: '620px',
+    color: '#858c9b',
+    fontSize: '12px',
+    lineHeight: 1.6,
+  },
+
+  readinessScore: {
+    minWidth: '92px',
+    padding: '10px 12px',
+    borderRadius: '12px',
+    background: '#f2edff',
+    textAlign: 'center',
+  },
+
+  readinessScoreValue: {
+    display: 'block',
+    color: '#6f5bc4',
+    fontSize: '22px',
+    lineHeight: 1,
+    fontWeight: 800,
+  },
+
+  readinessScoreLabel: {
+    display: 'block',
+    marginTop: '5px',
+    color: '#81769a',
+    fontSize: '9px',
+    fontWeight: 700,
+    lineHeight: 1.2,
+  },
+
+  readinessStats: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+    gap: '9px',
+    marginBottom: '16px',
+  },
+
+  readinessStat: {
+    minHeight: '58px',
+    padding: '9px 10px',
+    boxSizing: 'border-box',
+    borderRadius: '11px',
+    textAlign: 'center',
+  },
+
+  readinessStatValue: {
+    display: 'block',
+    fontSize: '19px',
+    lineHeight: 1,
+  },
+
+  readinessStatLabel: {
+    display: 'block',
+    marginTop: '5px',
+    fontSize: '9px',
+    fontWeight: 700,
+  },
+
+  readinessGroups: {
+    display: 'grid',
+    gap: '12px',
+  },
+
+  readinessGroup: {
+    padding: '12px',
+    border: '1px solid #ece8e4',
+    borderRadius: '12px',
+    background: '#fcfbfd',
+  },
+
+  readinessGroupTitle: {
+    marginBottom: '8px',
+    color: '#4b5264',
+    fontSize: '11px',
+    fontWeight: 800,
+  },
+
+  readinessSkillList: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gap: '8px',
+  },
+
+  readinessSkill: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    minWidth: 0,
+    padding: '9px',
+    border: '1px solid',
+    borderRadius: '10px',
+  },
+
+  readinessSkillDot: {
+    width: '7px',
+    height: '7px',
+    flexShrink: 0,
+    borderRadius: '50%',
+  },
+
+  readinessSkillContent: {
+    minWidth: 0,
+  },
+
+  readinessSkillName: {
+    display: 'block',
+    overflow: 'hidden',
+    color: '#29344a',
+    fontSize: '11px',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
+  },
+
+  readinessSkillMeta: {
+    display: 'block',
+    marginTop: '3px',
+    color: '#858c9b',
+    fontSize: '9px',
+  },
+
+  readinessEmpty: {
+    color: '#858c9b',
+    fontSize: '10px',
+    lineHeight: 1.5,
+  },
+
+  priorityBox: {
+    marginTop: '12px',
+    padding: '12px',
+    border: '1px solid #e1d9f1',
+    borderRadius: '12px',
+    background: '#f8f5ff',
+  },
+
+  priorityTitle: {
+    color: '#5e527b',
+    fontSize: '11px',
+    fontWeight: 800,
+  },
+
+  priorityText: {
+    margin: '4px 0 9px',
+    color: '#7b748b',
+    fontSize: '10px',
+    lineHeight: 1.5,
+  },
+
+  prioritySkills: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '6px',
+  },
+
+  priorityChip: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '5px 8px',
+    borderRadius: '999px',
+    background: '#eee8ff',
+    color: '#6f5bc4',
+    fontSize: '9px',
+    fontWeight: 800,
   },
 
   requirementList: {
@@ -1044,6 +1456,22 @@ const responsiveStyles = `
 
     .hs-job-details-grid {
       gap: 12px;
+    }
+  }
+
+  @media (max-width: 680px) {
+    .hs-job-details-page .readinessHeader {
+      flex-direction: column;
+    }
+
+    .hs-job-details-page .readinessScore {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .hs-job-details-page .readinessStats,
+    .hs-job-details-page .readinessSkillList {
+      grid-template-columns: 1fr 1fr;
     }
   }
 `

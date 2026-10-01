@@ -6,8 +6,13 @@ from app.db.session import get_db
 
 from app.models.application import Application
 from app.models.candidate import Candidate
+from app.models.candidate_skill import CandidateSkill
 from app.models.company import Company
+from app.models.education import Education
+from app.models.experience import Experience
 from app.models.job import Job
+from app.models.project import Project
+from app.models.resume import Resume
 from app.models.skill import Skill
 from app.models.user import User
 
@@ -327,6 +332,207 @@ def get_job_applications(
     )
 
     return results
+
+
+
+@router.get(
+    "/candidate/{candidate_id}",
+)
+def get_recruiter_candidate_intelligence(
+    candidate_id: int,
+    current_user: User = Depends(require_role("recruiter", "admin")),
+    db: Session = Depends(get_db),
+):
+    """
+    Return the candidate profile and supporting evidence for a recruiter
+    who has a legitimate application relationship with that candidate.
+
+    Recruiters may only access candidates who have applied to at least one
+    job owned by their company. Admins can access any candidate.
+    """
+
+    # ---------------------------------------------------------
+    # 1. Validate candidate
+    # ---------------------------------------------------------
+    candidate = (
+        db.query(Candidate)
+        .filter(Candidate.id == candidate_id)
+        .first()
+    )
+
+    if not candidate:
+        raise HTTPException(
+            status_code=404,
+            detail="Candidate not found",
+        )
+
+    # ---------------------------------------------------------
+    # 2. Validate recruiter access
+    # ---------------------------------------------------------
+    if current_user.role == "recruiter":
+        authorized_application = (
+            db.query(Application)
+            .join(Job, Application.job_id == Job.id)
+            .join(Company, Job.company_id == Company.id)
+            .filter(
+                Application.candidate_id == candidate_id,
+                Company.created_by == current_user.id,
+            )
+            .first()
+        )
+
+        if not authorized_application:
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "You can only view candidate profiles for "
+                    "applicants to your jobs"
+                ),
+            )
+
+    # ---------------------------------------------------------
+    # 3. Candidate skills
+    # ---------------------------------------------------------
+    skill_rows = (
+        db.query(CandidateSkill, Skill)
+        .join(
+            Skill,
+            CandidateSkill.skill_id == Skill.id,
+        )
+        .filter(
+            CandidateSkill.candidate_id == candidate_id
+        )
+        .order_by(Skill.name.asc())
+        .all()
+    )
+
+    skills = [
+        {
+            "skill_id": candidate_skill.skill_id,
+            "skill_name": skill.name,
+            "category": skill.category,
+            "proficiency": candidate_skill.proficiency,
+            "years_used": candidate_skill.years_used,
+            "source": candidate_skill.source,
+        }
+        for candidate_skill, skill in skill_rows
+    ]
+
+    # ---------------------------------------------------------
+    # 4. Education
+    # ---------------------------------------------------------
+    educations = (
+        db.query(Education)
+        .filter(Education.candidate_id == candidate_id)
+        .order_by(
+            Education.end_year.desc(),
+            Education.start_year.desc(),
+        )
+        .all()
+    )
+
+    education_data = [
+        {
+            "id": education.id,
+            "institution": education.institution,
+            "degree": education.degree,
+            "field_of_study": education.field_of_study,
+            "start_year": education.start_year,
+            "end_year": education.end_year,
+            "grade": education.grade,
+        }
+        for education in educations
+    ]
+
+    # ---------------------------------------------------------
+    # 5. Experience
+    # ---------------------------------------------------------
+    experiences = (
+        db.query(Experience)
+        .filter(Experience.candidate_id == candidate_id)
+        .order_by(Experience.start_date.desc())
+        .all()
+    )
+
+    experience_data = [
+        {
+            "id": experience.id,
+            "company_name": experience.company_name,
+            "job_title": experience.job_title,
+            "employment_type": experience.employment_type,
+            "location": experience.location,
+            "start_date": experience.start_date,
+            "end_date": experience.end_date,
+            "description": experience.description,
+        }
+        for experience in experiences
+    ]
+
+    # ---------------------------------------------------------
+    # 6. Projects
+    # ---------------------------------------------------------
+    projects = (
+        db.query(Project)
+        .filter(Project.candidate_id == candidate_id)
+        .order_by(Project.start_date.desc())
+        .all()
+    )
+
+    project_data = [
+        {
+            "id": project.id,
+            "project_name": project.project_name,
+            "project_type": project.project_type,
+            "technologies": project.technologies,
+            "project_link": project.project_link,
+            "start_date": project.start_date,
+            "end_date": project.end_date,
+            "description": project.description,
+        }
+        for project in projects
+    ]
+
+    # ---------------------------------------------------------
+    # 7. Latest resume
+    # ---------------------------------------------------------
+    resume = (
+        db.query(Resume)
+        .filter(Resume.candidate_id == candidate_id)
+        .order_by(Resume.id.desc())
+        .first()
+    )
+
+    resume_data = None
+
+    if resume:
+        resume_data = {
+            "id": resume.id,
+            "file_name": resume.file_name,
+            "file_type": resume.file_type,
+            "has_extracted_text": bool(
+                resume.extracted_text
+                and resume.extracted_text.strip()
+            ),
+            "extracted_text": resume.extracted_text,
+        }
+
+    # ---------------------------------------------------------
+    # 8. Final recruiter candidate intelligence response
+    # ---------------------------------------------------------
+    return {
+        "candidate": {
+            "id": candidate.id,
+            "full_name": candidate.full_name,
+            "phone": candidate.phone,
+            "location": candidate.location,
+            "summary": candidate.summary,
+        },
+        "skills": skills,
+        "education": education_data,
+        "experience": experience_data,
+        "projects": project_data,
+        "resume": resume_data,
+    }
 
 
 @router.patch(

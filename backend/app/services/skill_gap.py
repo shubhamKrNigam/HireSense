@@ -234,10 +234,29 @@ def build_candidate_skill_gap_overview(
         else:
             item["priority"] = "medium"
 
+    # Aggregate skill readiness across the strongest eligible target roles.
+    # This is a development/readiness signal, not another matching score.
+    readiness_scores = [
+        float(job["skill_gap_score"] or 0.0)
+        for job in target_jobs
+    ]
+
+    career_readiness = (
+        round(sum(readiness_scores) / len(readiness_scores), 2)
+        if readiness_scores
+        else None
+    )
+
     return {
         "candidate_id": candidate_id,
         "model_version": "skill-text-experience-education-v4",
         "target_job_count": len(target_jobs),
+        "career_readiness": career_readiness,
+        "career_readiness_basis": (
+            "Average skill readiness across the strongest eligible roles."
+            if career_readiness is not None
+            else "No eligible target roles available yet."
+        ),
         "target_jobs": target_jobs,
         "priority_gaps": priority_gaps[:10],
         "strong_skills": [

@@ -1195,12 +1195,12 @@ function CandidateProfilePage() {
         experience_level: saved.experience_level || '',
       })
 
-      setPreferencesSuccess('Job preferences saved successfully.')
+      setPreferencesSuccess('Career preferences saved successfully.')
     } catch (err) {
       console.error('Failed to save career preferences:', err)
       setPreferencesError(
         err.response?.data?.detail ||
-        'Unable to save your job preferences. Please try again.'
+        'Unable to save your career preferences. Please try again.'
       )
     } finally {
       setPreferencesSaving(false)
@@ -1709,462 +1709,14 @@ function CandidateProfilePage() {
 
 
         {/* ===================================================
-            EDUCATION
+            CAREER PREFERENCES
             =================================================== */}
-
-        <section className="hs-profile-card">
-          <div className="hs-profile-section-heading">
-            <div>
-              <span className="hs-profile-section-label">EDUCATION</span>
-              <h2>Education</h2>
-            </div>
-
-            <button
-              className="hs-profile-small-action"
-              onClick={openAddEducation}
-            >
-              <Plus size={16} />
-              Add education
-            </button>
-          </div>
-
-          {educations.length === 0 ? (
-            <div className="hs-profile-empty">
-              <GraduationCap size={22} />
-              <div>
-                <strong>Add your education</strong>
-                <span>
-                  Showcase your academic background and qualifications.
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div>
-              {educations.map((education) => (
-                <div className="hs-profile-item" key={education.id}>
-                  <div className="hs-profile-item-icon hs-icon-purple">
-                    <GraduationCap size={21} />
-                  </div>
-
-                  <div className="hs-profile-item-content">
-                    <strong>
-                      {education.degree ||
-                        education.education_type ||
-                        'Education'}
-                    </strong>
-
-                    {education.education_type && (
-                      <span>{education.education_type}</span>
-                    )}
-
-                    {education.field_of_study && (
-                      <span>{education.field_of_study}</span>
-                    )}
-
-                    <small>
-                      {education.institution}
-                      {' · '}
-                      {formatEducationYears(education)}
-                      {education.grade != null
-                        ? ` · ${education.score_type || 'Score'} ${education.grade}`
-                        : ''}
-                    </small>
-                  </div>
-
-                  <div style={{
-                    display: 'flex',
-                    gap: '8px',
-                    alignItems: 'center',
-                    marginLeft: 'auto',
-                    flexShrink: 0,
-                  }}>
-                    <button
-                      type="button"
-                      className="hs-profile-skill-delete"
-                      onClick={() => openEditEducation(education)}
-                      title="Edit education"
-                      aria-label="Edit education"
-                      style={{
-                        width: '34px',
-                        height: '34px',
-                        border: '0',
-                        borderRadius: '9px',
-                        background: '#f1edf8',
-                        color: '#6554c0',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <Pencil size={15} />
-                    </button>
-
-                    <button
-                      type="button"
-                      className="hs-profile-skill-delete"
-                      onClick={() => handleDeleteEducation(education.id)}
-                      title="Remove education"
-                      aria-label="Remove education"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-
-        {/* ===================================================
-            SKILLS
-            =================================================== */}
-
-        <section className="hs-profile-card">
-
-          <div className="hs-profile-section-heading">
-
-            <div>
-
-              <span className="hs-profile-section-label">
-                YOUR TOOLKIT
-              </span>
-
-              <h2>
-                Skills
-              </h2>
-
-            </div>
-
-
-            <button
-              className="hs-profile-small-action"
-              onClick={openSkillModal}
-            >
-              <Plus size={16} />
-              Add skill
-            </button>
-
-          </div>
-
-
-          {skills.length === 0 ? (
-
-            <div className="hs-profile-empty">
-
-              <Code2 size={22} />
-
-              <div>
-
-                <strong>
-                  Your skills will appear here
-                </strong>
-
-                <span>
-                  Add skills to improve your
-                  HireSense job matches.
-                </span>
-
-              </div>
-
-            </div>
-
-          ) : (
-
-            <div className="hs-profile-skills-grid">
-
-              {skills.map((skill) => (
-
-                <div
-                  className="hs-profile-skill-card"
-                  key={skill.id}
-                >
-
-                  <div className="hs-profile-skill-main">
-
-                    <div className="hs-profile-skill-icon">
-                      <Code2 size={17} />
-                    </div>
-
-
-                    <div>
-
-                      <strong>
-                        {getSkillName(
-                          skill.skill_id
-                        )}
-                      </strong>
-
-                      <span>
-                        {skill.years_used != null
-                          ? `${skill.years_used} ${
-                              skill.years_used === 1
-                                ? 'year'
-                                : 'years'
-                            }`
-                          : 'Experience not specified'}
-                      </span>
-
-                    </div>
-
-                  </div>
-
-
-                  <div className="hs-profile-skill-right">
-
-                    {skill.proficiency != null && (
-                      <span className="hs-profile-skill-level">
-                        {Math.round(
-                          skill.proficiency
-                        )}
-                        %
-                      </span>
-                    )}
-
-
-                    <button
-                      className="hs-profile-skill-delete"
-                      onClick={() =>
-                        handleDeleteSkill(
-                          skill.id
-                        )
-                      }
-                      title="Remove skill"
-                      aria-label={
-                        `Remove ${getSkillName(
-                          skill.skill_id
-                        )}`
-                      }
-                    >
-                      <Trash2 size={15} />
-                    </button>
-
-                  </div>
-
-                </div>
-
-              ))}
-
-            </div>
-
-          )}
-
-        </section>
-
-
-        {/* ===================================================
-            EXPERIENCE
-            =================================================== */}
-
-        <section className="hs-profile-card">
-
-          <div className="hs-profile-section-heading">
-
-            <div>
-
-              <span className="hs-profile-section-label">
-                EXPERIENCE
-              </span>
-
-              <h2>
-                Experience
-              </h2>
-
-            </div>
-
-
-            <button
-              className="hs-profile-small-action"
-              onClick={openAddExperience}
-            >
-              <Plus size={16} />
-              Add experience
-            </button>
-
-          </div>
-
-
-          {experiences.length === 0 ? (
-
-            <div className="hs-profile-empty">
-
-              <BriefcaseBusiness size={22} />
-
-              <div>
-
-                <strong>
-                  Add your experience
-                </strong>
-
-                <span>
-                  Showcase internships, jobs and other professional experience.
-                </span>
-
-              </div>
-
-            </div>
-
-          ) : (
-
-            <div>
-
-              {experiences.map((experience) => (
-
-                <div
-                  className="hs-profile-item"
-                  key={experience.id}
-                >
-
-                  <div className="hs-profile-item-icon hs-icon-peach">
-                    <BriefcaseBusiness size={21} />
-                  </div>
-
-
-                  <div className="hs-profile-item-content">
-
-                    <strong>
-                      {experience.job_title}
-                    </strong>
-
-                    <span>
-                      {experience.company_name}
-                      {experience.employment_type
-                        ? ` · ${experience.employment_type}`
-                        : ''}
-                    </span>
-
-                    <small>
-                      {experience.location
-                        ? `${experience.location} · `
-                        : ''}
-                      {formatExperienceDates(experience)}
-                    </small>
-
-                    {experience.description && (
-                      <p>
-                        {experience.description}
-                      </p>
-                    )}
-
-                  </div>
-
-
-                  <div style={{
-                    display: 'flex',
-                    gap: '8px',
-                    alignItems: 'center',
-                    marginLeft: 'auto',
-                    flexShrink: 0,
-                  }}>
-
-                    <button
-                      type="button"
-                      className="hs-profile-skill-delete"
-                      onClick={() => openEditExperience(experience)}
-                      title="Edit experience"
-                      aria-label="Edit experience"
-                      style={{
-                        width: '34px',
-                        height: '34px',
-                        border: '0',
-                        borderRadius: '9px',
-                        background: '#f1edf8',
-                        color: '#6554c0',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <Pencil size={15} />
-                    </button>
-
-                    <button
-                      type="button"
-                      className="hs-profile-skill-delete"
-                      onClick={() =>
-                        handleDeleteExperience(experience.id)
-                      }
-                      title="Remove experience"
-                      aria-label="Remove experience"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-
-                  </div>
-
-                </div>
-
-              ))}
-
-            </div>
-
-          )}
-
-        </section>
-
-
-        {/* ===================================================
-            PROJECTS
-            =================================================== */}
-
-        <section className="hs-profile-card">
-
-          <div className="hs-profile-section-heading">
-
-            <div>
-
-              <span className="hs-profile-section-label">
-                PROJECTS
-              </span>
-
-              <h2>
-                Projects
-              </h2>
-
-            </div>
-
-
-            <button type="button" className="hs-profile-small-action" onClick={openAddProject}>
-              <Plus size={16} />
-              Add project
-            </button>
-
-          </div>
-
-
-          {projects.length === 0 ? (
-            <div className="hs-profile-empty">
-              <FolderKanban size={22} />
-              <div>
-                <strong>Showcase your projects</strong>
-                <span>Add projects that demonstrate your technical skills.</span>
-              </div>
-            </div>
-          ) : (
-            <div>
-              {projects.map((project) => (
-                <div className="hs-profile-item" key={project.id}>
-                  <div className="hs-profile-item-icon hs-icon-blue"><FolderKanban size={21} /></div>
-                  <div className="hs-profile-item-content">
-                    <strong>{project.project_name}</strong>
-                    {project.project_type && <span>{project.project_type}</span>}
-                    {project.technologies && <small>{project.technologies}</small>}
-                    <small>{formatProjectDates(project)}</small>
-                    {project.description && <p>{project.description}</p>}
-                    {project.project_link && <a href={project.project_link} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: '7px', color: '#6554c0', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>View project ↗</a>}
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginLeft: 'auto', flexShrink: 0 }}>
-                    <button type="button" className="hs-profile-skill-delete" onClick={() => openEditProject(project)} title="Edit project" aria-label="Edit project" style={{ width: '34px', height: '34px', border: '0', borderRadius: '9px', background: '#f1edf8', color: '#6554c0', cursor: 'pointer' }}><Pencil size={15} /></button>
-                    <button type="button" className="hs-profile-skill-delete" onClick={() => handleDeleteProject(project.id)} title="Remove project" aria-label="Remove project"><Trash2 size={15} /></button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-        </section>
 
         <section className="hs-profile-card hs-career-preferences-card">
           <div className="hs-profile-section-heading">
             <div>
               <span className="hs-profile-section-label">WHAT YOU'RE LOOKING FOR</span>
-              <h2>Job preferences</h2>
+              <h2>Career preferences</h2>
             </div>
           </div>
 
@@ -2468,10 +2020,460 @@ function CandidateProfilePage() {
           </form>
         </section>
 
+
+        {/* ===================================================
+            SKILLS
+            =================================================== */}
+
+        <section className="hs-profile-card">
+
+          <div className="hs-profile-section-heading">
+
+            <div>
+
+              <span className="hs-profile-section-label">
+                YOUR TOOLKIT
+              </span>
+
+              <h2>
+                Skills
+              </h2>
+
+            </div>
+
+
+            <button
+              className="hs-profile-small-action"
+              onClick={openSkillModal}
+            >
+              <Plus size={16} />
+              Add skill
+            </button>
+
+          </div>
+
+
+          {skills.length === 0 ? (
+
+            <div className="hs-profile-empty">
+
+              <Code2 size={22} />
+
+              <div>
+
+                <strong>
+                  Your skills will appear here
+                </strong>
+
+                <span>
+                  Add skills to improve your
+                  HireSense job matches.
+                </span>
+
+              </div>
+
+            </div>
+
+          ) : (
+
+            <div className="hs-profile-skills-grid">
+
+              {skills.map((skill) => (
+
+                <div
+                  className="hs-profile-skill-card"
+                  key={skill.id}
+                >
+
+                  <div className="hs-profile-skill-main">
+
+                    <div className="hs-profile-skill-icon">
+                      <Code2 size={17} />
+                    </div>
+
+
+                    <div>
+
+                      <strong>
+                        {getSkillName(
+                          skill.skill_id
+                        )}
+                      </strong>
+
+                      <span>
+                        {skill.years_used != null
+                          ? `${skill.years_used} ${
+                              skill.years_used === 1
+                                ? 'year'
+                                : 'years'
+                            }`
+                          : 'Experience not specified'}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="hs-profile-skill-right">
+
+                    {skill.proficiency != null && (
+                      <span className="hs-profile-skill-level">
+                        {Math.round(
+                          skill.proficiency
+                        )}
+                        %
+                      </span>
+                    )}
+
+
+                    <button
+                      className="hs-profile-skill-delete"
+                      onClick={() =>
+                        handleDeleteSkill(
+                          skill.id
+                        )
+                      }
+                      title="Remove skill"
+                      aria-label={
+                        `Remove ${getSkillName(
+                          skill.skill_id
+                        )}`
+                      }
+                    >
+                      <Trash2 size={15} />
+                    </button>
+
+                  </div>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          )}
+
+        </section>
+
+
+        {/* ===================================================
+            EDUCATION
+            =================================================== */}
+
+        <section className="hs-profile-card">
+          <div className="hs-profile-section-heading">
+            <div>
+              <span className="hs-profile-section-label">EDUCATION</span>
+              <h2>Education</h2>
+            </div>
+
+            <button
+              className="hs-profile-small-action"
+              onClick={openAddEducation}
+            >
+              <Plus size={16} />
+              Add education
+            </button>
+          </div>
+
+          {educations.length === 0 ? (
+            <div className="hs-profile-empty">
+              <GraduationCap size={22} />
+              <div>
+                <strong>Add your education</strong>
+                <span>
+                  Showcase your academic background and qualifications.
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div>
+              {educations.map((education) => (
+                <div className="hs-profile-item" key={education.id}>
+                  <div className="hs-profile-item-icon hs-icon-purple">
+                    <GraduationCap size={21} />
+                  </div>
+
+                  <div className="hs-profile-item-content">
+                    <strong>
+                      {education.degree ||
+                        education.education_type ||
+                        'Education'}
+                    </strong>
+
+                    {education.education_type && (
+                      <span>{education.education_type}</span>
+                    )}
+
+                    {education.field_of_study && (
+                      <span>{education.field_of_study}</span>
+                    )}
+
+                    <small>
+                      {education.institution}
+                      {' · '}
+                      {formatEducationYears(education)}
+                      {education.grade != null
+                        ? ` · ${education.score_type || 'Score'} ${education.grade}`
+                        : ''}
+                    </small>
+                  </div>
+
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    alignItems: 'center',
+                    marginLeft: 'auto',
+                    flexShrink: 0,
+                  }}>
+                    <button
+                      type="button"
+                      className="hs-profile-skill-delete"
+                      onClick={() => openEditEducation(education)}
+                      title="Edit education"
+                      aria-label="Edit education"
+                      style={{
+                        width: '34px',
+                        height: '34px',
+                        border: '0',
+                        borderRadius: '9px',
+                        background: '#f1edf8',
+                        color: '#6554c0',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Pencil size={15} />
+                    </button>
+
+                    <button
+                      type="button"
+                      className="hs-profile-skill-delete"
+                      onClick={() => handleDeleteEducation(education.id)}
+                      title="Remove education"
+                      aria-label="Remove education"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+
+        {/* ===================================================
+            EXPERIENCE
+            =================================================== */}
+
+        <section className="hs-profile-card">
+
+          <div className="hs-profile-section-heading">
+
+            <div>
+
+              <span className="hs-profile-section-label">
+                EXPERIENCE
+              </span>
+
+              <h2>
+                Experience
+              </h2>
+
+            </div>
+
+
+            <button
+              className="hs-profile-small-action"
+              onClick={openAddExperience}
+            >
+              <Plus size={16} />
+              Add experience
+            </button>
+
+          </div>
+
+
+          {experiences.length === 0 ? (
+
+            <div className="hs-profile-empty">
+
+              <BriefcaseBusiness size={22} />
+
+              <div>
+
+                <strong>
+                  Add your experience
+                </strong>
+
+                <span>
+                  Showcase internships, jobs and other professional experience.
+                </span>
+
+              </div>
+
+            </div>
+
+          ) : (
+
+            <div>
+
+              {experiences.map((experience) => (
+
+                <div
+                  className="hs-profile-item"
+                  key={experience.id}
+                >
+
+                  <div className="hs-profile-item-icon hs-icon-peach">
+                    <BriefcaseBusiness size={21} />
+                  </div>
+
+
+                  <div className="hs-profile-item-content">
+
+                    <strong>
+                      {experience.job_title}
+                    </strong>
+
+                    <span>
+                      {experience.company_name}
+                      {experience.employment_type
+                        ? ` · ${experience.employment_type}`
+                        : ''}
+                    </span>
+
+                    <small>
+                      {experience.location
+                        ? `${experience.location} · `
+                        : ''}
+                      {formatExperienceDates(experience)}
+                    </small>
+
+                    {experience.description && (
+                      <p>
+                        {experience.description}
+                      </p>
+                    )}
+
+                  </div>
+
+
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    alignItems: 'center',
+                    marginLeft: 'auto',
+                    flexShrink: 0,
+                  }}>
+
+                    <button
+                      type="button"
+                      className="hs-profile-skill-delete"
+                      onClick={() => openEditExperience(experience)}
+                      title="Edit experience"
+                      aria-label="Edit experience"
+                      style={{
+                        width: '34px',
+                        height: '34px',
+                        border: '0',
+                        borderRadius: '9px',
+                        background: '#f1edf8',
+                        color: '#6554c0',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Pencil size={15} />
+                    </button>
+
+                    <button
+                      type="button"
+                      className="hs-profile-skill-delete"
+                      onClick={() =>
+                        handleDeleteExperience(experience.id)
+                      }
+                      title="Remove experience"
+                      aria-label="Remove experience"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+
+                  </div>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          )}
+
+        </section>
+
+
+        {/* ===================================================
+            PROJECTS
+            =================================================== */}
+
+        <section className="hs-profile-card">
+
+          <div className="hs-profile-section-heading">
+
+            <div>
+
+              <span className="hs-profile-section-label">
+                PROJECTS
+              </span>
+
+              <h2>
+                Projects
+              </h2>
+
+            </div>
+
+
+            <button type="button" className="hs-profile-small-action" onClick={openAddProject}>
+              <Plus size={16} />
+              Add project
+            </button>
+
+          </div>
+
+
+          {projects.length === 0 ? (
+            <div className="hs-profile-empty">
+              <FolderKanban size={22} />
+              <div>
+                <strong>Showcase your projects</strong>
+                <span>Add projects that demonstrate your technical skills.</span>
+              </div>
+            </div>
+          ) : (
+            <div>
+              {projects.map((project) => (
+                <div className="hs-profile-item" key={project.id}>
+                  <div className="hs-profile-item-icon hs-icon-blue"><FolderKanban size={21} /></div>
+                  <div className="hs-profile-item-content">
+                    <strong>{project.project_name}</strong>
+                    {project.project_type && <span>{project.project_type}</span>}
+                    {project.technologies && <small>{project.technologies}</small>}
+                    <small>{formatProjectDates(project)}</small>
+                    {project.description && <p>{project.description}</p>}
+                    {project.project_link && <a href={project.project_link} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: '7px', color: '#6554c0', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>View project ↗</a>}
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginLeft: 'auto', flexShrink: 0 }}>
+                    <button type="button" className="hs-profile-skill-delete" onClick={() => openEditProject(project)} title="Edit project" aria-label="Edit project" style={{ width: '34px', height: '34px', border: '0', borderRadius: '9px', background: '#f1edf8', color: '#6554c0', cursor: 'pointer' }}><Pencil size={15} /></button>
+                    <button type="button" className="hs-profile-skill-delete" onClick={() => handleDeleteProject(project.id)} title="Remove project" aria-label="Remove project"><Trash2 size={15} /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+        </section>
+
       </div>
-
-
-
 
 
       {/* =====================================================
@@ -3162,13 +3164,7 @@ function CandidateProfilePage() {
             }}
           >
 
-            {/* ===================================================
-            CAREER PREFERENCES
-            =================================================== */}
-
-        
-
-        {/* HEADER */}
+            {/* HEADER */}
 
             <div className="hs-profile-modal-header">
 
@@ -3690,7 +3686,7 @@ function CandidateProfilePage() {
                         '11px',
                     }}
                   >
-                    Optional ΓÇö duration
+                    Optional — duration
                     only
                   </small>
 
@@ -3758,5 +3754,3 @@ function CandidateProfilePage() {
 
 
 export default CandidateProfilePage
-
-

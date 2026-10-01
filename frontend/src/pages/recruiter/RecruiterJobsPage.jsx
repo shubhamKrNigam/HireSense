@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 
 import AppShell from '../../components/layout/AppShell'
 import api from '../../services/api'
@@ -10,7 +10,6 @@ const initialForm = {
   description: '',
   location: '',
   employment_type: '',
-  work_mode: '',
   experience_min: '',
   experience_max: '',
   experience_level: '',
@@ -31,6 +30,13 @@ function RecruiterJobsPage() {
 
   const [jobs, setJobs] = useState([])
   const [company, setCompany] = useState(null)
+
+  // Live hiring intelligence is derived from the existing recruiter
+  // application/matching endpoint. No second matching system is created.
+  const [jobIntelligence, setJobIntelligence] = useState({})
+  const [intelligenceLoading, setIntelligenceLoading] = useState(false)
+
+  const navigate = useNavigate()
 
   const [loading, setLoading] = useState(true)
   const [companyLoading, setCompanyLoading] = useState(true)
@@ -87,6 +93,64 @@ function RecruiterJobsPage() {
   }, [authLoading, isAuthenticated])
 
   useEffect(() => {
+    if (authLoading || !isAuthenticated || jobs.length === 0) {
+      return
+    }
+
+    async function loadJobIntelligence() {
+      try {
+        setIntelligenceLoading(true)
+
+        const results = await Promise.all(
+          jobs.map(async (job) => {
+            try {
+              const response = await api.get(`/applications/job/${job.id}`)
+              const applications = response.data || []
+
+              const scores = applications
+                .map((application) => Number(application.match_score))
+                .filter((score) => Number.isFinite(score))
+
+              const eligible = applications.filter(
+                (application) => application.eligibility === true
+              ).length
+
+              const strongMatches = scores.filter((score) => score >= 80).length
+
+              const averageScore = scores.length
+                ? Math.round(
+                    scores.reduce((sum, score) => sum + score, 0) / scores.length
+                  )
+                : null
+
+              return [job.id, {
+                applicants: applications.length,
+                eligible,
+                strongMatches,
+                averageScore,
+              }]
+            } catch (err) {
+              console.error(`Failed to load intelligence for job ${job.id}:`, err)
+              return [job.id, {
+                applicants: 0,
+                eligible: 0,
+                strongMatches: 0,
+                averageScore: null,
+              }]
+            }
+          })
+        )
+
+        setJobIntelligence(Object.fromEntries(results))
+      } finally {
+        setIntelligenceLoading(false)
+      }
+    }
+
+    loadJobIntelligence()
+  }, [authLoading, isAuthenticated, jobs])
+
+  useEffect(() => {
     if (authLoading || !isAuthenticated) {
       return
     }
@@ -139,7 +203,6 @@ function RecruiterJobsPage() {
       description: job.description || '',
       location: job.location || '',
       employment_type: job.employment_type || '',
-      work_mode: job.work_mode || '',
       experience_min:
         job.experience_min != null
           ? String(job.experience_min)
@@ -230,7 +293,6 @@ function RecruiterJobsPage() {
       location: form.location.trim() || null,
       employment_type:
         form.employment_type.trim() || null,
-      work_mode: form.work_mode.trim() || null,
       experience_level:
         form.experience_level.trim() || null,
       application_url:
@@ -545,19 +607,10 @@ function RecruiterJobsPage() {
         ])
       }
 
-      let skillSaveError = ''
-
-      try {
-        await saveJobSkills(
-          savedJob.id,
-          editingJobId ? previousSkills : []
-        )
-      } catch (skillsError) {
-        console.error(skillsError)
-        skillSaveError =
-          skillsError.response?.data?.detail ||
-          'The job was saved, but the selected skills could not be saved.'
-      }
+      await saveJobSkills(
+        savedJob.id,
+        editingJobId ? previousSkills : []
+      )
 
       setIsModalOpen(false)
       setEditingJobId(null)
@@ -565,14 +618,6 @@ function RecruiterJobsPage() {
       setJobSkills([])
       setSkillSearch('')
       setFormError('')
-
-      if (skillSaveError) {
-        setError(
-          editingJobId
-            ? `Job updated successfully. ${skillSaveError}`
-            : `Job created successfully. ${skillSaveError}`
-        )
-      }
     } catch (err) {
       console.error(err)
 
@@ -867,7 +912,12 @@ function RecruiterJobsPage() {
                     flexWrap: 'wrap',
                   }}
                 >
-                  <div>
+                  <div
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                    }}
+                  >
                     <h2
                       style={{
                         margin: 0,
@@ -886,40 +936,17 @@ function RecruiterJobsPage() {
                         color: '#666',
                       }}
                     >
-                      {job.work_mode &&
-                        job.location &&
-                        job.work_mode.toLowerCase() ===
-                          job.location.toLowerCase() ? (
-                        <>
-                          <span>{job.work_mode}</span>
-                          <span>•</span>
-                          <span>
-                            {job.employment_type ||
-                              'Employment type not specified'}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          {job.work_mode && (
-                            <>
-                              <span>{job.work_mode}</span>
-                              <span>•</span>
-                            </>
-                          )}
+                      <span>
+                        {job.location ||
+                          'Location not specified'}
+                      </span>
 
-                          <span>
-                            {job.location ||
-                              'Location not specified'}
-                          </span>
+                      <span>•</span>
 
-                          <span>•</span>
-
-                          <span>
-                            {job.employment_type ||
-                              'Employment type not specified'}
-                          </span>
-                        </>
-                      )}
+                      <span>
+                        {job.employment_type ||
+                          'Employment type not specified'}
+                      </span>
                     </div>
 
                     <p
@@ -939,6 +966,191 @@ function RecruiterJobsPage() {
                       }}
                     >
                       {formatSalary(job)}
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: '20px',
+                        padding: '20px 20px 18px',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                        borderRadius: '16px',
+                        background: '#faf8ff',
+                        border: '1px solid #e7e0f7',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          gap: '18px',
+                          marginBottom: '18px',
+                        }}
+                      >
+                        <div>
+                          <div
+                            style={{
+                              fontSize: '12px',
+                              fontWeight: 800,
+                              letterSpacing: '0.09em',
+                              color: '#7059b7',
+                            }}
+                          >
+                            HIRING SNAPSHOT
+                          </div>
+                          <div
+                            style={{
+                              marginTop: '5px',
+                              fontSize: '13px',
+                              color: '#666',
+                            }}
+                          >
+                            Live candidate-pool intelligence for this role.
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => navigate('/recruiter/applications')}
+                          style={{
+                            border: '1px solid #ddd4f3',
+                            borderRadius: '10px',
+                            background: '#ffffff',
+                            color: '#5d4ca5',
+                            padding: '9px 13px',
+                            fontSize: '12px',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          View applicants →
+                        </button>
+                      </div>
+
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+                          borderTop: '1px solid #e8e2f1',
+                          borderBottom: '1px solid #e8e2f1',
+                        }}
+                      >
+                        {[
+                          [
+                            'Applicants',
+                            jobIntelligence[job.id]?.applicants ??
+                              (intelligenceLoading ? '—' : 0),
+                          ],
+                          [
+                            'Eligible',
+                            jobIntelligence[job.id]?.eligible ??
+                              (intelligenceLoading ? '—' : 0),
+                          ],
+                          [
+                            'Strong matches',
+                            jobIntelligence[job.id]?.strongMatches ??
+                              (intelligenceLoading ? '—' : 0),
+                          ],
+                          [
+                            'Avg. match',
+                            jobIntelligence[job.id]?.averageScore != null
+                              ? `${jobIntelligence[job.id].averageScore}%`
+                              : '—',
+                          ],
+                        ].map(([label, value], index) => (
+                          <div
+                            key={label}
+                            style={{
+                              padding: '14px 18px',
+                              borderRight:
+                                index < 3 ? '1px solid #e8e2f1' : 'none',
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: '11px',
+                                color: '#777',
+                                fontWeight: 700,
+                                letterSpacing: '0.01em',
+                              }}
+                            >
+                              {label}
+                            </div>
+                            <div
+                              style={{
+                                marginTop: '5px',
+                                fontSize: '25px',
+                                lineHeight: 1,
+                                fontWeight: 800,
+                                color: '#24212b',
+                              }}
+                            >
+                              {value}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {(() => {
+                        const insight = jobIntelligence[job.id]
+
+                        // Keep the intelligence area clean while data is loading.
+                        if (!insight) return null
+
+                        if (insight.applicants === 0) {
+                          return (
+                            <div
+                              style={{
+                                marginTop: '14px',
+                                padding: '11px 13px',
+                                borderRadius: '10px',
+                                background: '#ffffff',
+                                border: '1px solid #ebe6f4',
+                                color: '#6a6472',
+                                fontSize: '12px',
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              <strong style={{ color: '#413b50' }}>
+                                No applicants yet.
+                              </strong>{' '}
+                              Candidate intelligence will appear here as applications are received.
+                            </div>
+                          )
+                        }
+
+                        let message = `Candidate pool: ${insight.applicants} applicant${insight.applicants === 1 ? '' : 's'} received.`
+
+                        if (insight.strongMatches > 0) {
+                          message += ` ${insight.strongMatches} strong match${insight.strongMatches === 1 ? '' : 'es'}.`
+                        }
+
+                        if (insight.averageScore != null) {
+                          message += ` Average match ${insight.averageScore}%.`
+                        }
+
+                        return (
+                          <div
+                            style={{
+                              marginTop: '14px',
+                              padding: '11px 13px',
+                              borderRadius: '10px',
+                              background: '#ffffff',
+                              border: '1px solid #ebe6f4',
+                              color: '#5f5a68',
+                              fontSize: '12px',
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            <strong style={{ color: '#413b50' }}>
+                              Candidate Pool Status:
+                            </strong>{' '}
+                            {message.replace(/^Candidate pool: /, '')}
+                          </div>
+                        )
+                      })()}
                     </div>
                   </div>
 
@@ -1255,24 +1467,6 @@ function RecruiterJobsPage() {
                     gap: '16px',
                   }}
                 >
-                  <div>
-                    <label style={labelStyle}>
-                      Work Mode
-                    </label>
-
-                    <select
-                      name="work_mode"
-                      value={form.work_mode}
-                      onChange={handleChange}
-                      style={inputStyle}
-                    >
-                      <option value="">Select mode</option>
-                      <option value="On-site">On-site</option>
-                      <option value="Hybrid">Hybrid</option>
-                      <option value="Remote">Remote</option>
-                    </select>
-                  </div>
-
                   <div>
                     <label style={labelStyle}>
                       Minimum Experience

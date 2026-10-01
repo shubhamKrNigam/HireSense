@@ -5487,7 +5487,7 @@ body {
 
 .hs-settings-container {
   width: 100%;
-  max-width: 1240px;
+  max-width: 900px;
   margin: 0 auto;
 }
 
@@ -6699,4 +6699,931 @@ body {
   .candidate-dashboard .hs-view-job {
     margin-left: 54px;
   }
+}
+
+
+/* =========================================================
+   FUNCTIONAL GLOBAL TOPBAR PROFILE MENU
+   ========================================================= */
+
+.hs-search {
+  flex: 1;
+}
+
+.hs-search input {
+  min-width: 0;
+}
+
+.hs-user-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.hs-user-trigger {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.hs-user-trigger.is-open {
+  background: #f7f4fc;
+}
+
+.hs-user-chevron {
+  flex-shrink: 0;
+  color: #85808d;
+  transition: transform 0.18s ease;
+}
+
+.hs-user-trigger.is-open .hs-user-chevron {
+  transform: rotate(180deg);
+}
+
+.hs-profile-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 1000;
+  width: 238px;
+  padding: 8px;
+  border: 1px solid #e5e0e9;
+  border-radius: 13px;
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(42, 34, 55, 0.14);
+}
+
+.hs-profile-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 8px 11px;
+}
+
+.hs-profile-menu-avatar {
+  width: 35px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: #eee8ff;
+  color: #6955ad;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.hs-profile-menu-header > div:last-child {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hs-profile-menu-header strong {
+  overflow: hidden;
+  color: #2d2a35;
+  font-size: 12px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hs-profile-menu-header span {
+  color: #918a98;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.hs-profile-menu-divider {
+  height: 1px;
+  margin: 5px 2px;
+  background: #eee9f1;
+}
+
+.hs-profile-menu-item {
+  width: 100%;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #595363;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.hs-profile-menu-item:hover {
+  background: #f7f4fc;
+  color: #5f4e9d;
+}
+
+.hs-profile-menu-signout {
+  color: #a05248;
+}
+
+.hs-profile-menu-signout:hover {
+  background: #fff5f2;
+  color: #a05248;
+}
+
+@media (max-width: 760px) {
+  .hs-profile-menu {
+    right: -4px;
+  }
+}
+
+
+/* =========================================================
+   HIRE SENSE SHELL — VISUAL REFINEMENT
+   Keeps the functional search/profile behavior intact.
+   ========================================================= */
+.hs-main {
+  background: #fafbfc;
+}
+.hs-topbar {
+  height: 72px;
+  padding: 0 30px;
+  background: rgba(255,255,255,.96);
+  border-bottom: 1px solid #e9eaf0;
+}
+.hs-search {
+  flex: 0 1 620px;
+  width: min(620px, 48vw);
+  min-height: 42px;
+  padding: 0 14px;
+  border-color: #e1e3ea;
+  border-radius: 11px;
+  background: #fbfcfe;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+.hs-search:focus-within {
+  border-color: #b9b0e8;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(117,98,184,.08);
+}
+.hs-search input {
+  font-size: 13px;
+}
+.hs-topbar-right {
+  gap: 12px;
+}
+.hs-icon-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  border-color: #e5e5eb;
+}
+.hs-user-trigger {
+  min-height: 46px;
+  padding: 5px 8px 5px 6px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  cursor: pointer;
+  transition: background .16s ease, border-color .16s ease;
+}
+.hs-user-trigger:hover, .hs-user-trigger.is-open {
+  background: #f7f6fb;
+  border-color: #e7e3ef;
+}
+.hs-avatar {
+  width: 36px;
+  height: 36px;
+}
+.hs-user-info strong {
+  font-size: 12px;
+  color: #26314a;
+}
+.hs-content {
+  width: min(1320px, calc(100% - 72px));
+  padding: 34px 0 64px;
+}
+@media (max-width: 900px) {
+  .hs-content { width: calc(100% - 48px); }
+}
+@media (max-width: 600px) {
+  .hs-topbar { padding: 0 14px; }
+  .hs-content { width: calc(100% - 28px); }
+}
+
+/* =========================================================
+   PLACEMENT OFFICER
+   CANDIDATES PAGE
+   ========================================================= */
+
+.po-candidates-page {
+  padding-bottom: 48px;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.po-candidates-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.po-candidates-header h1 {
+  margin: 6px 0 8px;
+  font-size: 36px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.8px;
+}
+
+.po-candidates-header p {
+  margin: 0;
+  color: #718096;
+  font-size: 14px;
+}
+
+.po-refresh-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  min-height: 40px;
+  padding: 0 16px;
+
+  border: 1px solid #dfe3ec;
+  border-radius: 9px;
+
+  background: #ffffff;
+  color: #27324a;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.po-refresh-button:hover:not(:disabled) {
+  background: #f8f8ff;
+  border-color: #cfd2ff;
+  box-shadow: 0 3px 10px rgba(70, 60, 180, 0.08);
+}
+
+.po-refresh-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.po-spin {
+  animation: po-spin-animation 0.8s linear infinite;
+}
+
+@keyframes po-spin-animation {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+.po-error {
+  margin-bottom: 22px;
+  padding: 12px 15px;
+
+  border: 1px solid #ffd1d1;
+  border-radius: 10px;
+
+  background: #fff6f6;
+  color: #d64545;
+
+  font-size: 13px;
+}
+
+/* =========================================================
+   STATISTICS
+   ========================================================= */
+
+.po-stats-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 14px;
+
+  margin-bottom: 28px;
+}
+
+.po-stat-card {
+  min-height: 94px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+
+  padding: 18px 20px;
+
+  border: 1px solid #e4e7ef;
+  border-radius: 13px;
+
+  background: #ffffff;
+
+  box-sizing: border-box;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.po-stat-card:hover {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 8px 24px rgba(31, 41, 72, 0.06);
+}
+
+.po-stat-icon {
+  width: 42px;
+  height: 42px;
+
+  flex: 0 0 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 11px;
+}
+
+.po-stat-content {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+}
+
+.po-stat-content span {
+  margin-bottom: 4px;
+
+  color: #718096;
+
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.po-stat-content strong {
+  color: #18233b;
+
+  font-size: 25px;
+  line-height: 1;
+
+  font-weight: 700;
+}
+
+/* STAT COLORS */
+
+.po-stat-purple {
+  background: #faf9ff;
+}
+
+.po-stat-purple .po-stat-icon {
+  background: #eeeaff;
+  color: #635bff;
+}
+
+.po-stat-yellow {
+  background: #fffdf5;
+}
+
+.po-stat-yellow .po-stat-icon {
+  background: #fff3c9;
+  color: #9a7212;
+}
+
+.po-stat-green {
+  background: #f5fbf8;
+}
+
+.po-stat-green .po-stat-icon {
+  background: #dff4e9;
+  color: #27815a;
+}
+
+.po-stat-blue {
+  background: #f5f9ff;
+}
+
+.po-stat-blue .po-stat-icon {
+  background: #e1edff;
+  color: #4779bd;
+}
+
+/* =========================================================
+   REGISTRY CARD
+   ========================================================= */
+
+.po-registry-card {
+  overflow: hidden;
+
+  border: 1px solid #e4e7ef;
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 3px 12px rgba(30, 40, 70, 0.025);
+}
+
+/* =========================================================
+   REGISTRY HEADER
+   ========================================================= */
+
+.po-registry-header {
+  min-height: 78px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding: 18px 22px;
+
+  border-bottom: 1px solid #edf0f5;
+
+  box-sizing: border-box;
+}
+
+.po-registry-header > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.po-registry-header h2 {
+  margin: 0;
+
+  color: #18233b;
+
+  font-size: 19px;
+  line-height: 1.2;
+
+  font-weight: 700;
+}
+
+.po-registry-header span {
+  color: #8a93a7;
+
+  font-size: 12px;
+}
+
+/* =========================================================
+   SEARCH
+   ========================================================= */
+
+.po-search {
+  width: 300px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  padding: 0 12px;
+
+  border: 1px solid #dfe3ec;
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  box-sizing: border-box;
+}
+
+.po-search svg {
+  flex: 0 0 auto;
+  color: #98a2b5;
+}
+
+.po-search input {
+  width: 100%;
+  height: 100%;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  color: #27324a;
+
+  font-size: 13px;
+}
+
+.po-search input::placeholder {
+  color: #9aa4b7;
+}
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.po-table-container {
+  width: 100%;
+
+  overflow-x: auto;
+}
+
+.po-table {
+  width: 100%;
+
+  min-width: 900px;
+
+  border-collapse: collapse;
+
+  table-layout: fixed;
+}
+
+.po-table th {
+  height: 48px;
+
+  padding: 0 18px;
+
+  border-bottom: 1px solid #edf0f5;
+
+  background: #fafbfc;
+
+  color: #7b8498;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+
+  text-align: left;
+
+  white-space: nowrap;
+}
+
+.po-table td {
+  padding: 17px 18px;
+
+  border-bottom: 1px solid #f0f2f6;
+
+  color: #3e4960;
+
+  font-size: 13px;
+
+  vertical-align: middle;
+}
+
+.po-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.po-table tbody tr {
+  transition:
+    background 0.15s ease;
+}
+
+.po-table tbody tr:hover {
+  background: #fafaff;
+}
+
+/* COLUMN WIDTHS */
+
+.po-table th:nth-child(1),
+.po-table td:nth-child(1) {
+  width: 24%;
+}
+
+.po-table th:nth-child(2),
+.po-table td:nth-child(2) {
+  width: 25%;
+}
+
+.po-table th:nth-child(3),
+.po-table td:nth-child(3) {
+  width: 14%;
+}
+
+.po-table th:nth-child(4),
+.po-table td:nth-child(4) {
+  width: 9%;
+}
+
+.po-table th:nth-child(5),
+.po-table td:nth-child(5) {
+  width: 9%;
+}
+
+.po-table th:nth-child(6),
+.po-table td:nth-child(6) {
+  width: 9%;
+}
+
+.po-table th:nth-child(7),
+.po-table td:nth-child(7) {
+  width: 10%;
+}
+
+.po-center {
+  text-align: center !important;
+}
+
+/* =========================================================
+   CANDIDATE
+   ========================================================= */
+
+.po-candidate {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  min-width: 0;
+}
+
+.po-avatar {
+  width: 38px;
+  height: 38px;
+
+  flex: 0 0 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #efedff;
+
+  color: #635bff;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.po-candidate-info {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  gap: 4px;
+}
+
+.po-candidate-info strong {
+  overflow: hidden;
+
+  color: #202b43;
+
+  font-size: 13px;
+  font-weight: 650;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.po-candidate-info span {
+  color: #9199aa;
+
+  font-size: 11px;
+}
+
+/* =========================================================
+   CONTACT
+   ========================================================= */
+
+.po-contact {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  min-width: 0;
+}
+
+.po-contact div {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  min-width: 0;
+}
+
+.po-contact svg {
+  flex: 0 0 auto;
+
+  color: #929bad;
+}
+
+.po-contact span {
+  overflow: hidden;
+
+  color: #59657b;
+
+  font-size: 12px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   LOCATION
+   ========================================================= */
+
+.po-location {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  color: #59657b;
+
+  white-space: nowrap;
+}
+
+.po-location svg {
+  color: #8b94a8;
+}
+
+/* =========================================================
+   NUMBERS
+   ========================================================= */
+
+.po-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 30px;
+
+  color: #29344b;
+
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.po-selected-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 5px;
+
+  color: #2f7e59;
+
+  font-weight: 650;
+}
+
+/* =========================================================
+   STATUS BADGES
+   ========================================================= */
+
+.po-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 78px;
+
+  padding: 5px 9px;
+
+  border-radius: 999px;
+
+  font-size: 10px;
+  font-weight: 650;
+
+  white-space: nowrap;
+}
+
+.po-status-selected {
+  background: #e8f7ef;
+  color: #287c55;
+}
+
+.po-status-interview {
+  background: #eaf2ff;
+  color: #3c70ad;
+}
+
+.po-status-shortlisted {
+  background: #f0ecff;
+  color: #6556b4;
+}
+
+.po-status-applied {
+  background: #f1f3f7;
+  color: #626c80;
+}
+
+.po-status-rejected {
+  background: #fff0f0;
+  color: #c45a5a;
+}
+
+.po-status-none {
+  background: #f4f5f7;
+  color: #8a93a3;
+}
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.po-empty-state {
+  min-height: 300px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 40px 20px;
+
+  color: #919bad;
+
+  text-align: center;
+}
+
+.po-empty-state svg {
+  margin-bottom: 5px;
+}
+
+.po-empty-state strong {
+  color: #59657b;
+
+  font-size: 14px;
+}
+
+.po-empty-state span {
+  color: #9aa3b4;
+
+  font-size: 12px;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+  .po-stats-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+}
+
+@media (max-width: 760px) {
+
+  .po-candidates-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .po-candidates-header h1 {
+    font-size: 30px;
+  }
+
+  .po-refresh-button {
+    width: 100%;
+  }
+
+  .po-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .po-registry-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .po-search {
+    width: 100%;
+  }
+
+  .po-table-container {
+    overflow-x: auto;
+  }
+
 }

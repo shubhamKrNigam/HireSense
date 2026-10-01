@@ -51,6 +51,10 @@ from app.api.candidate_preferences import (
 from app.api.account import router as account_router
 from app.api.skill_gaps import router as skill_gaps_router
 
+from app.api.placement_officer import (
+    router as placement_officer_router,
+)
+
 
 # =========================================================
 # APPLICATION
@@ -101,6 +105,9 @@ app.include_router(analytics_router)
 app.include_router(candidate_preferences_router)
 app.include_router(account_router)
 app.include_router(skill_gaps_router)
+app.include_router(
+    placement_officer_router
+)
 
 # =========================================================
 # DATABASE INITIALIZATION

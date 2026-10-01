@@ -104,6 +104,7 @@ function CandidateDashboardPage() {
   const strongSkills = skillGapData?.strong_skills || []
   const developingSkills = skillGapData?.developing_skills || []
   const targetJobs = skillGapData?.target_jobs || []
+  const careerReadiness = skillGapData?.career_readiness
 
   const selectedCount =
     summary.status_distribution?.selected || 0
@@ -139,6 +140,110 @@ function CandidateDashboardPage() {
       userName={candidate.full_name}
     >
       <div className="candidate-dashboard">
+        <style>{`
+          .candidate-dashboard .hs-dashboard-grid {
+            gap: 16px;
+          }
+
+          .candidate-dashboard .hs-lower-grid {
+            grid-template-columns: minmax(0, 1.18fr) minmax(360px, 0.88fr);
+            column-gap: 20px;
+            row-gap: 20px;
+            align-items: stretch;
+            margin-top: 20px;
+          }
+
+          .candidate-dashboard .hs-lower-grid > .hs-panel {
+            min-width: 0;
+            height: 100%;
+            box-sizing: border-box;
+          }
+
+          .candidate-dashboard .hs-lower-grid .hs-panel-header {
+            margin-bottom: 18px;
+          }
+
+          @media (max-width: 1100px) {
+            .candidate-dashboard .hs-lower-grid {
+              grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
+            }
+          }
+
+          @media (max-width: 820px) {
+            .candidate-dashboard .hs-lower-grid {
+              grid-template-columns: 1fr;
+              row-gap: 18px;
+            }
+
+            .candidate-dashboard .hs-lower-grid > .hs-panel {
+              height: auto;
+            }
+          }
+
+          .candidate-dashboard .hs-panel {
+            box-sizing: border-box;
+          }
+
+          .candidate-dashboard .hs-lower-grid > .hs-panel {
+            min-height: 0;
+          }
+
+          .candidate-dashboard .hs-application-list {
+            gap: 0;
+          }
+
+          .candidate-dashboard .hs-application-row {
+            min-height: 64px;
+            padding: 10px 0;
+          }
+
+          .candidate-dashboard .hs-application-company {
+            min-width: 0;
+          }
+
+          .candidate-dashboard .hs-application-company strong {
+            font-size: 12px;
+          }
+
+          .candidate-dashboard .hs-application-company span {
+            font-size: 10px;
+          }
+
+          .candidate-dashboard .hs-application-right {
+            margin-left: 12px;
+          }
+
+          .candidate-dashboard .hs-skill-grid {
+            gap: 13px;
+          }
+
+          .candidate-dashboard .hs-skill-item {
+            min-height: 34px;
+          }
+
+          .candidate-dashboard .hs-skill-name strong {
+            font-size: 11px;
+          }
+
+          .candidate-dashboard .hs-skill-name span {
+            font-size: 9px;
+          }
+
+          .candidate-dashboard .hs-skill-level {
+            gap: 8px;
+          }
+
+          .candidate-dashboard .hs-skill-track {
+            min-width: 90px;
+          }
+
+          .candidate-dashboard .hs-recommendation-panel,
+          .candidate-dashboard .hs-profile-panel {
+            min-height: 0;
+          }
+
+
+        `}</style>
 
         {/* =================================================
             PAGE HEADER
@@ -298,7 +403,7 @@ function CandidateDashboardPage() {
                       recommendation.match_score ??
                       0).toFixed(2)}%
                   </strong>
-                  <span>Recommended</span>
+                  <span>Recommendation Score</span>
                 </div>
               )}
 
@@ -415,10 +520,10 @@ function CandidateDashboardPage() {
 
                     <div className="hs-mini-skills">
 
-                      {(recommendation.matched_skills || []).length > 0 ? (
-                        recommendation.matched_skills.map(
-                          (skill) => (
-                            <span key={skill}>
+                      {matchedSkillNames.length > 0 ? (
+                        matchedSkillNames.map(
+                          (skill, index) => (
+                            <span key={`${skill}-${index}`}>
                               {skill}
                             </span>
                           ),
@@ -545,7 +650,7 @@ function CandidateDashboardPage() {
         <section
           style={{
             marginTop: '24px',
-            padding: '22px 24px',
+            padding: '19px 21px',
             borderRadius: '18px',
             border: '1px solid #e7e2f5',
             background:
@@ -709,17 +814,45 @@ function CandidateDashboardPage() {
 
             <div
               style={{
-                padding: '9px 12px',
-                borderRadius: '10px',
-                background: '#f8f6ff',
-                border: '1px solid #ebe7f8',
-                color: '#6557ba',
-                fontSize: '11px',
-                fontWeight: 700,
-                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                flexWrap: 'wrap',
+                justifyContent: 'flex-end',
               }}
             >
-              {targetJobs.length} target role{targetJobs.length === 1 ? '' : 's'} analyzed
+              {careerReadiness != null && (
+                <div
+                  title="Average skill readiness across the strongest eligible target roles."
+                  style={{
+                    padding: '9px 12px',
+                    borderRadius: '10px',
+                    background: '#f8f6ff',
+                    border: '1px solid #ebe7f8',
+                    color: '#6557ba',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Career readiness <strong>{Number(careerReadiness).toFixed(0)}%</strong>
+                </div>
+              )}
+
+              <div
+                style={{
+                  padding: '9px 12px',
+                  borderRadius: '10px',
+                  background: '#f8f6ff',
+                  border: '1px solid #ebe7f8',
+                  color: '#6557ba',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {targetJobs.length} target role{targetJobs.length === 1 ? '' : 's'} analyzed
+              </div>
             </div>
           </div>
 
@@ -777,21 +910,41 @@ function CandidateDashboardPage() {
               </span>
 
               {targetJobs.slice(0, 3).map((job) => (
-                <div
+                <button
+                  type="button"
                   key={job.job_id}
+                  onClick={() =>
+                    navigate(`/candidate/jobs/${job.job_id}`)
+                  }
+                  aria-label={`View skill readiness for ${job.job_title}`}
                   style={{
+                    width: '100%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     gap: '12px',
-                    padding: '9px 11px',
+                    padding: '8px 11px',
                     borderRadius: '10px',
                     background: '#fbfbfd',
                     border: '1px solid #efedf4',
+                    color: 'inherit',
+                    font: 'inherit',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.16s ease, background 0.16s ease, transform 0.16s ease',
+                  }}
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.background = '#f8f6ff'
+                    event.currentTarget.style.borderColor = '#ddd5f6'
+                  }}
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.background = '#fbfbfd'
+                    event.currentTarget.style.borderColor = '#efedf4'
                   }}
                 >
                   <span
                     style={{
+                      minWidth: 0,
                       color: '#25212c',
                       fontSize: '12px',
                       fontWeight: 700,
@@ -802,14 +955,19 @@ function CandidateDashboardPage() {
 
                   <span
                     style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      flexShrink: 0,
                       color: '#635bff',
                       fontSize: '11px',
                       fontWeight: 800,
                     }}
                   >
                     {Number(job.skill_gap_score || 0).toFixed(0)}% skill readiness
+                    <ArrowUpRight size={13} />
                   </span>
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -883,12 +1041,8 @@ function CandidateDashboardPage() {
                       <span
                         className={`hs-status hs-status-${application.status}`}
                       >
-                        {application.status}
+                        {formatApplicationStatus(application.status)}
                       </span>
-
-                      <strong>
-                        {(application.match_score ?? 0).toFixed(0)}%
-                      </strong>
 
                     </div>
 
@@ -1005,6 +1159,19 @@ function CandidateDashboardPage() {
    SMALL COMPONENTS
    ========================================================= */
 
+function formatApplicationStatus(status) {
+  const labels = {
+    applied: 'Applied',
+    shortlisted: 'Shortlisted',
+    interview: 'Interview',
+    rejected: 'Rejected',
+    selected: 'Selected',
+  }
+
+  return labels[status] || String(status || 'Applied')
+}
+
+
 function SkillGapGroup({
   title,
   description,
@@ -1040,7 +1207,7 @@ function SkillGapGroup({
         borderRadius: '12px',
         background: palette.background,
         border: `1px solid ${palette.border}`,
-        minHeight: '116px',
+        minHeight: '108px',
       }}
     >
       <div
@@ -1075,7 +1242,7 @@ function SkillGapGroup({
 
       <p
         style={{
-          margin: '4px 0 10px',
+          margin: '3px 0 8px',
           color: '#77727f',
           fontSize: '10px',
           lineHeight: 1.4,
@@ -1101,7 +1268,7 @@ function SkillGapGroup({
               <span
                 key={label}
                 style={{
-                  padding: '5px 8px',
+                  padding: '4px 7px',
                   borderRadius: '7px',
                   background: '#ffffff',
                   border: `1px solid ${palette.border}`,
