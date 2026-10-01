@@ -51,4 +51,7 @@ Thumbs.db
 backend/uploads/
 
 # Test/sample uploaded documents
-backend/test_resume.pdfbackend_python_files.txt
+backend/test_resume.pdf
+
+# Local generated/helper files
+backend_python_files.txt
