@@ -1,6 +1,6 @@
 from collections import Counter, defaultdict
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.security import require_role
@@ -11,6 +11,8 @@ from app.models.candidate import Candidate
 from app.models.company import Company
 from app.models.job import Job
 from app.models.user import User
+
+from app.services.notification_service import create_notification
 
 
 router = APIRouter(
@@ -64,6 +66,25 @@ def get_placement_overview(
     }
 
     # -----------------------------------------------------
+    # LOOKUP MAPS
+    # -----------------------------------------------------
+
+    candidate_map = {
+        candidate.id: candidate
+        for candidate in candidates
+    }
+
+    job_map = {
+        job.id: job
+        for job in jobs
+    }
+
+    company_map = {
+        company.id: company
+        for company in companies
+    }
+
+    # -----------------------------------------------------
     # RECENT APPLICATIONS
     # -----------------------------------------------------
 
@@ -75,31 +96,18 @@ def get_placement_overview(
         reverse=True,
     )[:10]:
 
-        candidate = next(
-            (
-                item
-                for item in candidates
-                if item.id == application.candidate_id
-            ),
-            None,
+        candidate = candidate_map.get(
+            application.candidate_id
         )
 
-        job = next(
-            (
-                item
-                for item in jobs
-                if item.id == application.job_id
-            ),
-            None,
+        job = job_map.get(
+            application.job_id
         )
 
-        company = next(
-            (
-                item
-                for item in companies
-                if job and item.id == job.company_id
-            ),
-            None,
+        company = (
+            company_map.get(job.company_id)
+            if job
+            else None
         )
 
         if not candidate or not job:
@@ -141,13 +149,8 @@ def get_placement_overview(
             for application in job_applications
         )
 
-        company = next(
-            (
-                item
-                for item in companies
-                if item.id == job.company_id
-            ),
-            None,
+        company = company_map.get(
+            job.company_id
         )
 
         role_monitoring.append(
@@ -192,7 +195,6 @@ def get_placement_overview(
 
     return {
         "role": current_user.role,
-
         "summary": {
             "registered_candidates": len(
                 candidates
@@ -213,15 +215,12 @@ def get_placement_overview(
                 active_companies
             ),
         },
-
         "application_status": dict(
             status_counts
         ),
-
         "recent_applications": (
             recent_applications
         ),
-
         "role_monitoring": (
             role_monitoring[:12]
         ),
@@ -253,7 +252,7 @@ def get_placement_candidates(
     }
 
     # -----------------------------------------------------
-    # GROUP APPLICATIONS BY CANDIDATE
+    # APPLICATIONS BY CANDIDATE
     # -----------------------------------------------------
 
     applications_by_candidate = defaultdict(list)
@@ -264,7 +263,7 @@ def get_placement_candidates(
         ].append(application)
 
     # -----------------------------------------------------
-    # BUILD CANDIDATE MONITORING DATA
+    # BUILD CANDIDATE DATA
     # -----------------------------------------------------
 
     result = []
@@ -290,19 +289,14 @@ def get_placement_candidates(
         result.append(
             {
                 "candidate_id": candidate.id,
-
                 "user_id": candidate.user_id,
-
                 "name": candidate.full_name,
-
                 "email": (
                     user.email
                     if user
                     else None
                 ),
-
                 "phone": candidate.phone,
-
                 "location": candidate.location,
 
                 "application_count": len(
@@ -342,12 +336,6 @@ def get_placement_candidates(
             }
         )
 
-    # -----------------------------------------------------
-    # SORT
-    # Candidates with the most application activity
-    # appear first.
-    # -----------------------------------------------------
-
     result.sort(
         key=lambda item: (
             item["application_count"],
@@ -356,17 +344,14 @@ def get_placement_candidates(
         reverse=True,
     )
 
-    # -----------------------------------------------------
-    # RESPONSE
-    # -----------------------------------------------------
-
     return {
         "role": current_user.role,
         "count": len(result),
         "candidates": result,
     }
 
-    # =========================================================
+
+# =========================================================
 # PLACEMENT OFFICER — RECRUITERS
 # =========================================================
 
@@ -379,427 +364,26 @@ def get_placement_recruiters(
 ):
     recruiters = (
         db.query(User)
-        .filter(User.role == "recruiter")
-        .all()
-    )
-
-    companies = db.query(Company).all()
-    jobs = db.query(Job).all()
-    applications = db.query(Application).all()
-
-    company_map = {
-        company.id: company
-        for company in companies
-    }
-
-    jobs_by_company = defaultdict(list)
-
-    for job in jobs:
-        jobs_by_company[job.company_id].append(job)
-
-    applications_by_job = defaultdict(list)
-
-    for application in applications:
-        applications_by_job[
-            application.job_id
-        ].append(application)
-
-    result = []
-
-    for recruiter in recruiters:
-
-        recruiter_companies = [
-            company
-            for company in companies
-            if company.created_by == recruiter.id
-        ]
-
-        recruiter_jobs = []
-
-        for company in recruiter_companies:
-            recruiter_jobs.extend(
-                jobs_by_company.get(
-                    company.id,
-                    [],
-                )
-            )
-
-        recruiter_applications = []
-
-        for job in recruiter_jobs:
-            recruiter_applications.extend(
-                applications_by_job.get(
-                    job.id,
-                    [],
-                )
-            )
-
-        selected_count = sum(
-            1
-            for application
-            in recruiter_applications
-            if application.status == "selected"
-        )
-
-        open_jobs = sum(
-            1
-            for job in recruiter_jobs
-            if job.status == "open"
-        )
-
-        company_names = [
-            company.name
-            for company in recruiter_companies
-            if company.name
-        ]
-
-        recruiter_name = (
-            getattr(recruiter, "name", None)
-            or getattr(recruiter, "full_name", None)
-            or recruiter.email
-            or f"Recruiter #{recruiter.id}"
-        )
-
-        result.append(
-            {
-                "recruiter_id": recruiter.id,
-                "name": recruiter_name,
-                "email": recruiter.email,
-                "company_count": len(
-                    recruiter_companies
-                ),
-                "companies": company_names,
-                "total_jobs": len(
-                    recruiter_jobs
-                ),
-                "open_jobs": open_jobs,
-                "total_applications": len(
-                    recruiter_applications
-                ),
-                "selected_candidates": selected_count,
-            }
-        )
-
-    result.sort(
-        key=lambda item: (
-            item["total_jobs"],
-            item["total_applications"],
-            item["recruiter_id"],
-        ),
-        reverse=True,
-    )
-
-    return {
-        "role": current_user.role,
-        "count": len(result),
-        "recruiters": result,
-    }
-
-
-# =========================================================
-# PLACEMENT OFFICER — PLACEMENT DRIVES
-# =========================================================
-
-@router.get("/drives")
-def get_placement_drives(
-    current_user: User = Depends(
-        require_role("placement_officer")
-    ),
-    db: Session = Depends(get_db),
-):
-    jobs = db.query(Job).all()
-    companies = db.query(Company).all()
-    applications = db.query(Application).all()
-
-    company_map = {
-        company.id: company
-        for company in companies
-    }
-
-    applications_by_job = defaultdict(list)
-
-    for application in applications:
-        applications_by_job[
-            application.job_id
-        ].append(application)
-
-    result = []
-
-    for job in jobs:
-
-        job_applications = (
-            applications_by_job.get(
-                job.id,
-                [],
-            )
-        )
-
-        status_counts = Counter(
-            application.status
-            for application in job_applications
-        )
-
-        company = company_map.get(
-            job.company_id
-        )
-
-        result.append(
-            {
-                "job_id": job.id,
-                "title": job.title,
-                "company_name": (
-                    company.name
-                    if company
-                    else "Unknown company"
-                ),
-                "location": getattr(
-                    job,
-                    "location",
-                    None,
-                ),
-                "employment_type": getattr(
-                    job,
-                    "employment_type",
-                    None,
-                ),
-                "work_mode": getattr(
-                    job,
-                    "work_mode",
-                    None,
-                ),
-                "status": job.status,
-                "application_count": len(
-                    job_applications
-                ),
-                "applied_count": status_counts.get(
-                    "applied",
-                    0,
-                ),
-                "shortlisted_count": status_counts.get(
-                    "shortlisted",
-                    0,
-                ),
-                "interview_count": status_counts.get(
-                    "interview",
-                    0,
-                ),
-                "selected_count": status_counts.get(
-                    "selected",
-                    0,
-                ),
-                "rejected_count": status_counts.get(
-                    "rejected",
-                    0,
-                ),
-            }
-        )
-
-    result.sort(
-        key=lambda item: (
-            item["application_count"],
-            item["job_id"],
-        ),
-        reverse=True,
-    )
-
-    return {
-        "role": current_user.role,
-        "count": len(result),
-        "drives": result,
-    }
-
-
-# =========================================================
-# PLACEMENT OFFICER — APPLICATIONS
-# =========================================================
-
-@router.get("/applications")
-def get_placement_applications(
-    current_user: User = Depends(
-        require_role("placement_officer")
-    ),
-    db: Session = Depends(get_db),
-):
-    applications = (
-        db.query(Application)
-        .order_by(
-            Application.applied_at.desc()
+        .filter(
+            User.role == "recruiter"
         )
         .all()
     )
 
-    candidates = db.query(Candidate).all()
-    users = db.query(User).all()
-    jobs = db.query(Job).all()
-    companies = db.query(Company).all()
+    companies = db.query(
+        Company
+    ).all()
 
-    candidate_map = {
-        candidate.id: candidate
-        for candidate in candidates
-    }
+    jobs = db.query(
+        Job
+    ).all()
 
-    user_map = {
-        user.id: user
-        for user in users
-    }
-
-    job_map = {
-        job.id: job
-        for job in jobs
-    }
-
-    company_map = {
-        company.id: company
-        for company in companies
-    }
-
-    result = []
-
-    for application in applications:
-
-        candidate = candidate_map.get(
-            application.candidate_id
-        )
-
-        job = job_map.get(
-            application.job_id
-        )
-
-        company = (
-            company_map.get(
-                job.company_id
-            )
-            if job
-            else None
-        )
-
-        user = (
-            user_map.get(
-                candidate.user_id
-            )
-            if candidate
-            else None
-        )
-
-        if not candidate or not job:
-            continue
-
-        result.append(
-            {
-                "application_id": application.id,
-
-                "candidate_id": candidate.id,
-
-                "candidate_name": (
-                    candidate.full_name
-                ),
-
-                "candidate_email": (
-                    user.email
-                    if user
-                    else None
-                ),
-
-                "candidate_phone": (
-                    candidate.phone
-                ),
-
-                "candidate_location": (
-                    candidate.location
-                ),
-
-                "job_id": job.id,
-
-                "job_title": job.title,
-
-                "company_name": (
-                    company.name
-                    if company
-                    else "Unknown company"
-                ),
-
-                "status": application.status,
-
-                "applied_at": (
-                    application.applied_at
-                ),
-            }
-        )
-
-    status_counts = Counter(
-        application["status"]
-        for application in result
-    )
-
-    return {
-        "role": current_user.role,
-
-        "count": len(result),
-
-        "summary": {
-            "total": len(result),
-            "applied": status_counts.get(
-                "applied",
-                0,
-            ),
-            "shortlisted": status_counts.get(
-                "shortlisted",
-                0,
-            ),
-            "interview": status_counts.get(
-                "interview",
-                0,
-            ),
-            "selected": status_counts.get(
-                "selected",
-                0,
-            ),
-            "rejected": status_counts.get(
-                "rejected",
-                0,
-            ),
-        },
-
-        "applications": result,
-    }
-
-    # =========================================================
-# PLACEMENT OFFICER — RECRUITERS
-# =========================================================
-
-@router.get("/recruiters")
-def get_placement_recruiters(
-    current_user: User = Depends(
-        require_role("placement_officer")
-    ),
-    db: Session = Depends(get_db),
-):
-    recruiters = (
-        db.query(User)
-        .filter(User.role == "recruiter")
-        .all()
-    )
-
-    companies = (
-        db.query(Company)
-        .all()
-    )
-
-    jobs = (
-        db.query(Job)
-        .all()
-    )
-
-    applications = (
-        db.query(Application)
-        .all()
-    )
+    applications = db.query(
+        Application
+    ).all()
 
     # -----------------------------------------------------
     # GROUP COMPANIES BY RECRUITER
-    #
-    # Company.created_by is the recruiter/user who owns
-    # the company.
     # -----------------------------------------------------
 
     companies_by_recruiter = defaultdict(list)
@@ -881,25 +465,45 @@ def get_placement_recruiters(
             if application.status == "selected"
         ]
 
+        recruiter_name = (
+            getattr(
+                recruiter,
+                "name",
+                None,
+            )
+            or getattr(
+                recruiter,
+                "full_name",
+                None,
+            )
+            or recruiter.email
+            or f"Recruiter #{recruiter.id}"
+        )
+
+        # -------------------------------------------------
+        # APPROVAL STATUS
+        #
+        # Existing users without the column/value are
+        # treated as approved for backward compatibility.
+        # -------------------------------------------------
+
+        approval_status = getattr(
+            recruiter,
+            "approval_status",
+            "approved",
+        )
+
         result.append(
             {
                 "recruiter_id": recruiter.id,
 
-                "name": (
-                    getattr(
-                        recruiter,
-                        "name",
-                        None,
-                    )
-                    or getattr(
-                        recruiter,
-                        "full_name",
-                        None,
-                    )
-                    or f"Recruiter #{recruiter.id}"
-                ),
+                "name": recruiter_name,
 
                 "email": recruiter.email,
+
+                "position": recruiter.position,
+
+                "approval_status": approval_status,
 
                 "companies": [
                     company.name
@@ -930,20 +534,180 @@ def get_placement_recruiters(
             }
         )
 
-    # Recruiters with hiring activity first.
+    # -----------------------------------------------------
+    # PENDING RECRUITERS FIRST
+    # -----------------------------------------------------
+
     result.sort(
         key=lambda item: (
-            item["total_applications"],
-            item["open_jobs"],
+            0
+            if item["approval_status"] == "pending"
+            else 1,
+            -item["total_applications"],
+            -item["open_jobs"],
             item["recruiter_id"],
-        ),
-        reverse=True,
+        )
     )
 
     return {
         "role": current_user.role,
         "count": len(result),
+
+        "pending_count": sum(
+            1
+            for item in result
+            if item["approval_status"]
+            == "pending"
+        ),
+
         "recruiters": result,
+    }
+
+
+# =========================================================
+# APPROVE RECRUITER
+# =========================================================
+
+@router.patch(
+    "/recruiters/{recruiter_id}/approve"
+)
+def approve_recruiter(
+    recruiter_id: int,
+    current_user: User = Depends(
+        require_role("placement_officer")
+    ),
+    db: Session = Depends(get_db),
+):
+    recruiter = (
+        db.query(User)
+        .filter(
+            User.id == recruiter_id,
+            User.role == "recruiter",
+        )
+        .first()
+    )
+
+    if not recruiter:
+        raise HTTPException(
+            status_code=404,
+            detail="Recruiter not found",
+        )
+
+    current_status = getattr(
+        recruiter,
+        "approval_status",
+        "approved",
+    )
+
+    if current_status == "approved":
+        return {
+            "message": (
+                "Recruiter is already approved"
+            ),
+            "recruiter_id": recruiter.id,
+            "approval_status": "approved",
+        }
+
+    recruiter.approval_status = "approved"
+
+    db.commit()
+    db.refresh(recruiter)
+
+    # -----------------------------------------------------
+    # NOTIFY RECRUITER
+    # -----------------------------------------------------
+
+    try:
+        create_notification(
+            db=db,
+            user_id=recruiter.id,
+            title="Recruiter Account Approved",
+            message=(
+                "Your recruiter account has been "
+                "approved by the Placement Officer. "
+                "You can now access recruiter features "
+                "and manage your company."
+            ),
+            notification_type="recruiter_approval",
+        )
+
+    except Exception as exc:
+        print(
+            f"Failed to notify recruiter "
+            f"{recruiter.id}: {exc}"
+        )
+
+    return {
+        "message": (
+            "Recruiter approved successfully"
+        ),
+        "recruiter_id": recruiter.id,
+        "approval_status": recruiter.approval_status,
+    }
+
+
+# =========================================================
+# REJECT RECRUITER
+# =========================================================
+
+@router.patch(
+    "/recruiters/{recruiter_id}/reject"
+)
+def reject_recruiter(
+    recruiter_id: int,
+    current_user: User = Depends(
+        require_role("placement_officer")
+    ),
+    db: Session = Depends(get_db),
+):
+    recruiter = (
+        db.query(User)
+        .filter(
+            User.id == recruiter_id,
+            User.role == "recruiter",
+        )
+        .first()
+    )
+
+    if not recruiter:
+        raise HTTPException(
+            status_code=404,
+            detail="Recruiter not found",
+        )
+
+    recruiter.approval_status = "rejected"
+
+    db.commit()
+    db.refresh(recruiter)
+
+    # -----------------------------------------------------
+    # NOTIFY RECRUITER
+    # -----------------------------------------------------
+
+    try:
+        create_notification(
+            db=db,
+            user_id=recruiter.id,
+            title="Recruiter Account Rejected",
+            message=(
+                "Your recruiter account registration "
+                "was not approved by the Placement Officer."
+            ),
+            notification_type="recruiter_approval",
+        )
+
+    except Exception as exc:
+        print(
+            f"Failed to notify recruiter "
+            f"{recruiter.id}: {exc}"
+        )
+
+    return {
+        "message": (
+            "Recruiter rejected successfully"
+        ),
+        "recruiter_id": recruiter.id,
+        "approval_status": recruiter.approval_status,
     }
 
 
@@ -958,20 +722,11 @@ def get_placement_drives(
     ),
     db: Session = Depends(get_db),
 ):
-    jobs = (
-        db.query(Job)
-        .all()
-    )
-
-    companies = (
-        db.query(Company)
-        .all()
-    )
-
-    applications = (
-        db.query(Application)
-        .all()
-    )
+    jobs = db.query(Job).all()
+    companies = db.query(Company).all()
+    applications = db.query(
+        Application
+    ).all()
 
     company_map = {
         company.id: company
@@ -998,8 +753,7 @@ def get_placement_drives(
 
         status_counts = Counter(
             application.status
-            for application
-            in job_applications
+            for application in job_applications
         )
 
         company = company_map.get(
@@ -1018,41 +772,54 @@ def get_placement_drives(
                     else "Unknown company"
                 ),
 
-                "location": job.location,
+                "location": getattr(
+                    job,
+                    "location",
+                    None,
+                ),
 
-                "work_mode": job.work_mode,
+                "employment_type": getattr(
+                    job,
+                    "employment_type",
+                    None,
+                ),
 
-                "employment_type":
-                    job.employment_type,
+                "work_mode": getattr(
+                    job,
+                    "work_mode",
+                    None,
+                ),
 
                 "status": job.status,
 
-                "application_count":
-                    len(job_applications),
+                "application_count": len(
+                    job_applications
+                ),
 
-                "shortlisted_count":
-                    status_counts.get(
-                        "shortlisted",
-                        0,
-                    ),
+                "applied_count": status_counts.get(
+                    "applied",
+                    0,
+                ),
 
-                "interview_count":
-                    status_counts.get(
-                        "interview",
-                        0,
-                    ),
+                "shortlisted_count": status_counts.get(
+                    "shortlisted",
+                    0,
+                ),
 
-                "selected_count":
-                    status_counts.get(
-                        "selected",
-                        0,
-                    ),
+                "interview_count": status_counts.get(
+                    "interview",
+                    0,
+                ),
 
-                "rejected_count":
-                    status_counts.get(
-                        "rejected",
-                        0,
-                    ),
+                "selected_count": status_counts.get(
+                    "selected",
+                    0,
+                ),
+
+                "rejected_count": status_counts.get(
+                    "rejected",
+                    0,
+                ),
             }
         )
 
@@ -1082,30 +849,25 @@ def get_placement_applications(
     ),
     db: Session = Depends(get_db),
 ):
-    applications = (
-        db.query(Application)
-        .all()
-    )
+    applications = db.query(
+        Application
+    ).all()
 
-    candidates = (
-        db.query(Candidate)
-        .all()
-    )
+    candidates = db.query(
+        Candidate
+    ).all()
 
-    users = (
-        db.query(User)
-        .all()
-    )
+    users = db.query(
+        User
+    ).all()
 
-    jobs = (
-        db.query(Job)
-        .all()
-    )
+    jobs = db.query(
+        Job
+    ).all()
 
-    companies = (
-        db.query(Company)
-        .all()
-    )
+    companies = db.query(
+        Company
+    ).all()
 
     # -----------------------------------------------------
     # LOOKUPS
@@ -1160,11 +922,9 @@ def get_placement_applications(
 
         result.append(
             {
-                "application_id":
-                    application.id,
+                "application_id": application.id,
 
-                "candidate_id":
-                    candidate.id,
+                "candidate_id": candidate.id,
 
                 "candidate_name":
                     candidate.full_name,
@@ -1175,14 +935,21 @@ def get_placement_applications(
                     else None
                 ),
 
-                "candidate_location":
-                    candidate.location,
+                "candidate_phone": getattr(
+                    candidate,
+                    "phone",
+                    None,
+                ),
 
-                "job_id":
-                    job.id,
+                "candidate_location": getattr(
+                    candidate,
+                    "location",
+                    None,
+                ),
 
-                "job_title":
-                    job.title,
+                "job_id": job.id,
+
+                "job_title": job.title,
 
                 "company_name": (
                     company.name
@@ -1190,29 +957,21 @@ def get_placement_applications(
                     else "Unknown company"
                 ),
 
-                "status":
-                    application.status,
+                "status": application.status,
 
                 "applied_at":
                     application.applied_at,
             }
         )
 
-    # Newest applications first.
+    # -----------------------------------------------------
+    # NEWEST FIRST
+    # -----------------------------------------------------
+
     result.sort(
-        key=lambda item: (
-            item["application_id"]
-        ),
+        key=lambda item: item["application_id"],
         reverse=True,
     )
-
-    # -----------------------------------------------------
-    # STATUS SUMMARY
-    #
-    # Kept in the API for other consumers, but the
-    # Placement Officer frontend calculates its cards
-    # directly from the returned application rows.
-    # -----------------------------------------------------
 
     status_counts = Counter(
         item["status"]
@@ -1225,19 +984,17 @@ def get_placement_applications(
         "count": len(result),
 
         "summary": {
-            "total":
-                len(result),
+            "total": len(result),
 
-            "active":
-                sum(
-                    1
-                    for item in result
-                    if item["status"]
-                    not in {
-                        "rejected",
-                        "selected",
-                    }
-                ),
+            "active": sum(
+                1
+                for item in result
+                if item["status"]
+                not in {
+                    "rejected",
+                    "selected",
+                }
+            ),
 
             "shortlisted":
                 status_counts.get(

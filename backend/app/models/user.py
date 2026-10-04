@@ -35,6 +35,30 @@ class User(Base):
         nullable=False,
     )
 
+    # -----------------------------------------------------
+    # Recruiter position / designation
+    #
+    # Examples:
+    # HR
+    # HR Manager
+    # Talent Acquisition Specialist
+    # Recruiter
+    #
+    # Candidate accounts can leave this NULL.
+    # -----------------------------------------------------
+
+    position: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    approval_status: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+        default="approved",
+        server_default="approved",
+    )
+
     created_at: Mapped[datetime | None] = mapped_column(
         DateTime,
         server_default="CURRENT_TIMESTAMP",

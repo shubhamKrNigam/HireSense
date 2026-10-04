@@ -7,14 +7,19 @@ import {
 
 import api from '../services/api'
 
+
 const AuthContext = createContext(null)
+
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
+
   useEffect(() => {
-    const token = localStorage.getItem('hiresense_token')
+    const token = localStorage.getItem(
+      'hiresense_token'
+    )
 
     if (!token) {
       setLoading(false)
@@ -27,7 +32,10 @@ export function AuthProvider({ children }) {
         setUser(response.data)
       })
       .catch(() => {
-        localStorage.removeItem('hiresense_token')
+        localStorage.removeItem(
+          'hiresense_token'
+        )
+
         setUser(null)
       })
       .finally(() => {
@@ -35,11 +43,15 @@ export function AuthProvider({ children }) {
       })
   }, [])
 
+
   async function login(email, password) {
-    const response = await api.post('/auth/login', {
-      email,
-      password,
-    })
+    const response = await api.post(
+      '/auth/login',
+      {
+        email,
+        password,
+      }
+    )
 
     const data = response.data
 
@@ -53,15 +65,21 @@ export function AuthProvider({ children }) {
       name: data.name,
       email: data.email,
       role: data.role,
+      position: data.position ?? null,
     })
 
     return data
   }
 
+
   function logout() {
-    localStorage.removeItem('hiresense_token')
+    localStorage.removeItem(
+      'hiresense_token'
+    )
+
     setUser(null)
   }
+
 
   return (
     <AuthContext.Provider
@@ -77,6 +95,7 @@ export function AuthProvider({ children }) {
     </AuthContext.Provider>
   )
 }
+
 
 export function useAuth() {
   const context = useContext(AuthContext)

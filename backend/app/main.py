@@ -23,6 +23,7 @@ from app.models.resume import Resume
 from app.models.application import Application
 from app.models.match_result import MatchResult
 from app.models.candidate_preference import CandidatePreference
+from app.models.notification import Notification
 
 
 # =========================================================
@@ -45,14 +46,25 @@ from app.api.resumes import router as resumes_router
 from app.api.matching import router as matching_router
 from app.api.recommendations import router as recommendations_router
 from app.api.analytics import router as analytics_router
+
 from app.api.candidate_preferences import (
     router as candidate_preferences_router,
 )
-from app.api.account import router as account_router
-from app.api.skill_gaps import router as skill_gaps_router
+
+from app.api.account import (
+    router as account_router,
+)
+
+from app.api.skill_gaps import (
+    router as skill_gaps_router,
+)
 
 from app.api.placement_officer import (
     router as placement_officer_router,
+)
+
+from app.api.notifications import (
+    router as notifications_router,
 )
 
 
@@ -105,9 +117,9 @@ app.include_router(analytics_router)
 app.include_router(candidate_preferences_router)
 app.include_router(account_router)
 app.include_router(skill_gaps_router)
-app.include_router(
-    placement_officer_router
-)
+app.include_router(placement_officer_router)
+app.include_router(notifications_router)
+
 
 # =========================================================
 # DATABASE INITIALIZATION

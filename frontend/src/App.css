@@ -7627,3 +7627,1190 @@ body {
   }
 
 }
+/* =========================================================
+   NOTIFICATIONS
+========================================================= */
+
+.hs-notification-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hs-notification-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Unread badge */
+
+.hs-notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+
+  background: #ef4444;
+  color: #ffffff;
+
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* =========================================================
+   NOTIFICATION PANEL
+========================================================= */
+
+.hs-notification-panel {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+
+  width: 440px;
+  max-width: calc(100vw - 32px);
+
+  background: #ffffff;
+
+  border: 1px solid #e7e5ef;
+  border-radius: 18px;
+
+  box-shadow:
+    0 18px 45px rgba(30, 25, 60, 0.14),
+    0 4px 14px rgba(30, 25, 60, 0.06);
+
+  overflow: hidden;
+
+  z-index: 1000;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.hs-notification-header {
+  min-height: 88px;
+
+  padding: 20px 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  box-sizing: border-box;
+}
+
+.hs-notification-header > div:first-child {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+
+  gap: 4px;
+}
+
+.hs-notification-header strong {
+  margin: 0;
+
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+
+  color: #20202a;
+}
+
+.hs-notification-header span {
+  margin: 0;
+
+  font-size: 14px;
+  line-height: 1.3;
+
+  color: #92909f;
+}
+
+/* Header action buttons */
+
+.hs-notification-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hs-notification-close,
+.hs-notification-mark-all {
+  width: 34px;
+  height: 34px;
+
+  padding: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #d9d7df;
+  border-radius: 6px;
+
+  background: #ffffff;
+  color: #20202a;
+
+  cursor: pointer;
+
+  box-sizing: border-box;
+}
+
+.hs-notification-close:hover,
+.hs-notification-mark-all:hover {
+  background: #f7f6fb;
+}
+
+/* =========================================================
+   DIVIDER
+========================================================= */
+
+.hs-notification-divider {
+  width: 100%;
+  height: 1px;
+
+  background: #eceaf0;
+}
+
+/* =========================================================
+   VIEW ALL NOTIFICATIONS
+========================================================= */
+
+.hs-notification-view-all {
+  width: 100%;
+  min-height: 52px;
+
+  padding: 0 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  border: 0;
+  border-radius: 0 0 16px 16px;
+
+  background: #ffffff;
+  color: #5b50f5;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+
+  cursor: pointer;
+  box-sizing: border-box;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.hs-notification-view-all:hover {
+  background: #f7f6ff;
+  color: #4f46e5;
+}
+
+.hs-notification-view-all:active {
+  background: #f1efff;
+}
+
+.hs-notification-view-all:focus {
+  outline: none;
+}
+
+.hs-notification-view-all:focus-visible {
+  outline: 2px solid rgba(91, 80, 245, 0.35);
+  outline-offset: -2px;
+}
+
+.hs-notification-view-all svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  stroke-width: 2;
+}
+
+.hs-notification-view-all span {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.hs-notification-empty {
+  min-height: 236px;
+
+  padding: 32px 24px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  box-sizing: border-box;
+}
+
+.hs-notification-empty > svg {
+  flex: 0 0 auto;
+
+  width: 24px;
+  height: 24px;
+
+  margin-bottom: 12px;
+
+  color: #1f2937;
+}
+
+.hs-notification-empty strong {
+  display: block;
+
+  margin: 0 0 4px;
+
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+
+  color: #20202a;
+}
+
+.hs-notification-empty span {
+  display: block;
+
+  margin: 0;
+
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.35;
+
+  color: #29283a;
+}
+
+/* =========================================================
+   LOADING / ERROR
+========================================================= */
+
+.hs-notification-error {
+  min-height: 180px;
+
+  padding: 32px 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  color: #dc2626;
+  font-size: 14px;
+
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   NOTIFICATION LIST
+========================================================= */
+
+.hs-notification-list {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.hs-notification-item {
+  width: 100%;
+
+  padding: 15px 20px;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  border: 0;
+  border-bottom: 1px solid #efedf2;
+
+  background: #ffffff;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  box-sizing: border-box;
+}
+
+.hs-notification-item:last-child {
+  border-bottom: 0;
+}
+
+.hs-notification-item:hover {
+  background: #faf9fd;
+}
+
+.hs-notification-item.is-unread {
+  background: #f8f7ff;
+}
+
+.hs-notification-item-dot {
+  width: 8px;
+  height: 8px;
+
+  flex: 0 0 8px;
+
+  margin-top: 6px;
+
+  border-radius: 50%;
+
+  background: transparent;
+}
+
+.hs-notification-item.is-unread
+  .hs-notification-item-dot {
+  background: #635bff;
+}
+
+.hs-notification-content {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.hs-notification-content strong {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+
+  color: #20202a;
+}
+
+.hs-notification-content span {
+  font-size: 13px;
+  line-height: 1.45;
+
+  color: #666475;
+}
+
+.hs-notification-content small {
+  margin-top: 3px;
+
+  font-size: 11px;
+  line-height: 1.3;
+
+  color: #9a98a5;
+}
+
+/* =========================================================
+   HIRESENSE — NOTIFICATION DROPDOWN POLISH
+   Final UI overrides
+========================================================= */
+
+/* ---------- PANEL ---------- */
+
+.hs-notification-panel {
+  width: min(430px, calc(100vw - 32px));
+  max-height: min(680px, calc(100vh - 96px));
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  background: #ffffff;
+
+  border: 1px solid #e7e4ee;
+  border-radius: 18px;
+
+  box-shadow:
+    0 24px 60px rgba(32, 27, 56, 0.14),
+    0 8px 24px rgba(32, 27, 56, 0.08);
+
+  isolation: isolate;
+}
+
+
+/* ---------- HEADER ---------- */
+
+.hs-notification-header {
+  flex: 0 0 auto;
+
+  min-height: 76px;
+  padding: 18px 18px 16px 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.hs-notification-header > div:first-child {
+  min-width: 0;
+}
+
+.hs-notification-header strong {
+  display: block;
+
+  margin: 0;
+
+  font-size: 18px;
+  font-weight: 750;
+  line-height: 1.25;
+
+  letter-spacing: -0.02em;
+
+  color: #252331;
+}
+
+.hs-notification-header span {
+  display: block;
+
+  margin-top: 4px;
+
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+
+  color: #918da0;
+}
+
+
+/* ---------- HEADER ACTIONS ---------- */
+
+.hs-notification-actions {
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.hs-notification-close,
+.hs-notification-mark-all {
+  width: 36px;
+  height: 36px;
+
+  padding: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #e2dfe9;
+  border-radius: 10px;
+
+  background: #ffffff;
+  color: #575263;
+
+  cursor: pointer;
+
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.hs-notification-close:hover,
+.hs-notification-mark-all:hover {
+  background: #f7f5ff;
+  border-color: #d7d1f4;
+  color: #6259dc;
+}
+
+.hs-notification-close:active,
+.hs-notification-mark-all:active {
+  transform: scale(0.95);
+}
+
+.hs-notification-close:focus-visible,
+.hs-notification-mark-all:focus-visible {
+  outline: 3px solid rgba(98, 89, 220, 0.16);
+  outline-offset: 2px;
+}
+
+
+/* ---------- DIVIDER ---------- */
+
+.hs-notification-divider {
+  flex: 0 0 auto;
+
+  width: 100%;
+  height: 1px;
+
+  background: #eeeaf4;
+}
+
+
+/* =========================================================
+   NOTIFICATION LIST
+========================================================= */
+
+.hs-notification-list {
+  flex: 1 1 auto;
+
+  min-height: 0;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  overscroll-behavior: contain;
+
+  scrollbar-width: thin;
+  scrollbar-color: #d8d4e2 transparent;
+}
+
+
+/* Chrome / Edge scrollbar */
+
+.hs-notification-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.hs-notification-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.hs-notification-list::-webkit-scrollbar-thumb {
+  background: #d8d4e2;
+  border-radius: 999px;
+}
+
+.hs-notification-list::-webkit-scrollbar-thumb:hover {
+  background: #bbb5cc;
+}
+
+
+/* ---------- NOTIFICATION ITEM ---------- */
+
+.hs-notification-item {
+  position: relative;
+
+  width: 100%;
+
+  padding: 17px 22px 17px 20px;
+
+  display: flex;
+  align-items: flex-start;
+
+  gap: 12px;
+
+  border: 0;
+  border-bottom: 1px solid #eeeaf4;
+
+  background: #ffffff;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  box-sizing: border-box;
+
+  transition:
+    background 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.hs-notification-item:last-child {
+  border-bottom: 0;
+}
+
+.hs-notification-item:hover {
+  background: #faf9fd;
+}
+
+.hs-notification-item:focus-visible {
+  outline: none;
+
+  background: #f7f5ff;
+
+  box-shadow:
+    inset 3px 0 0 #6259dc;
+}
+
+
+/* ---------- UNREAD ---------- */
+
+.hs-notification-item.is-unread {
+  background: #faf9ff;
+}
+
+.hs-notification-item.is-unread:hover {
+  background: #f6f4ff;
+}
+
+
+/* ---------- UNREAD DOT ---------- */
+
+.hs-notification-item-dot {
+  flex: 0 0 auto;
+
+  width: 7px;
+  height: 7px;
+
+  margin-top: 7px;
+
+  border-radius: 50%;
+
+  background: transparent;
+}
+
+.hs-notification-item.is-unread .hs-notification-item-dot {
+  background: #6259dc;
+
+  box-shadow:
+    0 0 0 3px rgba(98, 89, 220, 0.10);
+}
+
+
+/* ---------- CONTENT ---------- */
+
+.hs-notification-content {
+  min-width: 0;
+  flex: 1;
+
+  display: block;
+}
+
+.hs-notification-content strong {
+  display: block;
+
+  margin: 0 0 5px;
+
+  overflow: hidden;
+
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+
+  color: #292735;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hs-notification-item.is-unread
+.hs-notification-content strong {
+  color: #211d2e;
+}
+
+.hs-notification-content > span {
+  display: -webkit-box;
+
+  margin: 0;
+
+  overflow: hidden;
+
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.5;
+
+  color: #777284;
+
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.hs-notification-content small {
+  display: block;
+
+  margin-top: 8px;
+
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.3;
+
+  color: #a09baa;
+}
+
+
+/* =========================================================
+   VIEW ALL FOOTER
+========================================================= */
+
+.hs-notification-panel > .hs-notification-view-all {
+  flex: 0 0 auto;
+
+  position: relative;
+
+  width: 100%;
+  min-height: 54px;
+
+  padding: 0 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  border: 0;
+  border-top: 1px solid #eeeaf4;
+
+  border-radius: 0 0 18px 18px;
+
+  background: #ffffff;
+
+  color: #6259dc;
+
+  font-size: 13.5px;
+  font-weight: 650;
+
+  cursor: pointer;
+
+  box-sizing: border-box;
+
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+}
+
+.hs-notification-panel > .hs-notification-view-all:hover {
+  background: #f8f7ff;
+  color: #5048c9;
+}
+
+.hs-notification-panel > .hs-notification-view-all:active {
+  background: #f1efff;
+}
+
+.hs-notification-panel > .hs-notification-view-all:focus-visible {
+  outline: none;
+
+  box-shadow:
+    inset 0 0 0 2px rgba(98, 89, 220, 0.25);
+}
+
+.hs-notification-panel > .hs-notification-view-all svg {
+  flex: 0 0 auto;
+
+  width: 16px;
+  height: 16px;
+
+  stroke-width: 2;
+}
+
+.hs-notification-panel > .hs-notification-view-all span {
+  line-height: 1;
+}
+
+
+/* =========================================================
+   EMPTY / LOADING
+========================================================= */
+
+.hs-notification-empty {
+  flex: 1 1 auto;
+
+  min-height: 220px;
+
+  padding: 40px 24px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  color: #777284;
+}
+
+.hs-notification-empty > svg {
+  width: 25px;
+  height: 25px;
+
+  margin-bottom: 12px;
+
+  color: #6259dc;
+}
+
+.hs-notification-empty strong {
+  margin-bottom: 5px;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  color: #292735;
+}
+
+.hs-notification-empty span {
+  font-size: 13px;
+  color: #918c9d;
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.hs-notification-error {
+  flex: 1 1 auto;
+
+  min-height: 180px;
+
+  padding: 30px 24px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 14px;
+
+  text-align: center;
+}
+
+.hs-notification-error span {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #777284;
+}
+
+.hs-notification-error button {
+  padding: 9px 16px;
+
+  border: 1px solid #ddd8ef;
+  border-radius: 9px;
+
+  background: #f7f5ff;
+  color: #6259dc;
+
+  font-size: 13px;
+  font-weight: 650;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 600px) {
+  .hs-notification-panel {
+    width: min(420px, calc(100vw - 20px));
+
+    max-height: calc(100vh - 78px);
+
+    border-radius: 16px;
+  }
+
+  .hs-notification-header {
+    padding: 16px;
+  }
+
+  .hs-notification-item {
+    padding: 15px 16px;
+  }
+
+  .hs-notification-panel > .hs-notification-view-all {
+    border-radius: 0 0 16px 16px;
+  }
+}
+
+
+
+/* =========================================================
+   HIRESENSE AUTH ACTIONS
+   ========================================================= */
+
+.hs-password-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hs-password-label-row label {
+  margin: 0;
+}
+
+
+/* =========================================================
+   FORGOT PASSWORD
+   ========================================================= */
+
+.hs-forgot-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+
+  padding: 0;
+  margin: 0;
+
+  color: var(--hs-primary);
+  font-size: 11px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    color 160ms ease,
+    opacity 160ms ease;
+}
+
+.hs-forgot-link:hover:not(:disabled) {
+  color: var(--hs-primary-dark);
+  text-decoration: underline;
+}
+
+.hs-forgot-link:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   CREATE ACCOUNT
+   ========================================================= */
+
+.hs-auth-register {
+  margin-top: 19px;
+}
+
+.hs-auth-register-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 5px;
+
+  color: var(--hs-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.hs-auth-link-button {
+  appearance: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  border: 0;
+  background: transparent;
+
+  padding: 0;
+
+  color: var(--hs-primary);
+
+  font: inherit;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.hs-auth-link-button:hover {
+  color: var(--hs-primary-dark);
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   AUTH BACK BUTTON
+   ========================================================= */
+
+.hs-auth-back-button {
+  appearance: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  border: 1px solid var(--hs-border);
+  border-radius: 9px;
+
+  background: white;
+
+  padding: 8px 12px;
+
+  color: var(--hs-text-secondary);
+
+  font-size: 11px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.hs-auth-back-button:hover {
+  border-color: rgba(99, 91, 255, 0.28);
+  background: var(--hs-primary-soft);
+  color: var(--hs-primary);
+
+  transform: translateY(-1px);
+}
+
+.hs-register-back-button {
+  width: 100%;
+  margin-top: 11px;
+}
+
+
+/* =========================================================
+   RECOVERY PAGE
+   ========================================================= */
+
+.hs-recovery-header {
+  margin-top: 17px;
+}
+
+.hs-recovery-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+
+  margin-top: 21px;
+  padding: 13px 14px;
+
+  border: 1px solid #ccebd9;
+  border-radius: 10px;
+
+  background: #f1fbf5;
+  color: #087443;
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.hs-recovery-notice > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.hs-recovery-notice > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.hs-recovery-notice strong {
+  font-size: 12px;
+}
+
+.hs-recovery-notice span {
+  color: #4d8065;
+  font-size: 11px;
+}
+
+.hs-recovery-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+
+  margin-top: 22px;
+}
+
+.hs-recovery-actions .hs-login-button {
+  width: 100%;
+}
+
+.hs-auth-secondary-button {
+  appearance: none;
+
+  min-height: 40px;
+
+  border: 1px solid var(--hs-border);
+  border-radius: 9px;
+
+  background: white;
+
+  color: var(--hs-text-secondary);
+
+  font-size: 11px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.hs-auth-secondary-button:hover {
+  border-color: rgba(99, 91, 255, 0.28);
+  background: var(--hs-primary-soft);
+  color: var(--hs-primary);
+}
+
+
+/* =========================================================
+   AUTH BUTTON RESET
+   Prevent browser-default button appearance
+   ========================================================= */
+
+.hs-login-card button {
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.hs-login-card button:focus-visible {
+  outline: 3px solid rgba(99, 91, 255, 0.16);
+  outline-offset: 2px;
+}
+
+
+/* =========================================================
+   MOBILE AUTH
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .hs-password-label-row {
+    align-items: flex-start;
+  }
+
+  .hs-forgot-link {
+    font-size: 10px;
+  }
+
+  .hs-auth-register-text {
+    font-size: 11px;
+  }
+
+  .hs-auth-back-button {
+    font-size: 11px;
+  }
+
+}

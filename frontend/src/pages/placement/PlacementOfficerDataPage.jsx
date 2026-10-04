@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Clock3,
   FileText,
+  LoaderCircle,
   Mail,
   MapPin,
   RefreshCw,
@@ -12,12 +13,20 @@ import {
   XCircle,
 } from 'lucide-react'
 
-import { useEffect, useMemo, useState } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 
 import AppShell from '../../components/layout/AppShell'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 
+
+// =========================================================
+// PAGE CONFIG
+// =========================================================
 
 const PAGE_CONFIG = {
   recruiters: {
@@ -46,9 +55,9 @@ const PAGE_CONFIG = {
 }
 
 
-/* =========================================================
-   STAT CARD
-   ========================================================= */
+// =========================================================
+// STAT CARD
+// =========================================================
 
 function StatCard({
   icon: Icon,
@@ -83,7 +92,8 @@ function StatCard({
     },
   }
 
-  const current = tones[tone] || tones.purple
+  const current =
+    tones[tone] || tones.purple
 
   return (
     <div
@@ -145,9 +155,9 @@ function StatCard({
 }
 
 
-/* =========================================================
-   STATUS BADGE
-   ========================================================= */
+// =========================================================
+// STATUS BADGE
+// =========================================================
 
 function StatusBadge({ status }) {
   const config = {
@@ -193,6 +203,18 @@ function StatusBadge({ status }) {
       color: '#218653',
     },
 
+    pending: {
+      label: 'Pending',
+      background: '#fff7df',
+      color: '#a77a00',
+    },
+
+    approved: {
+      label: 'Approved',
+      background: '#eaf8f0',
+      color: '#218653',
+    },
+
     rejected: {
       label: 'Rejected',
       background: '#fff0f0',
@@ -200,11 +222,12 @@ function StatusBadge({ status }) {
     },
   }
 
-  const current = config[status] || {
-    label: status || 'Unknown',
-    background: '#f3f3f5',
-    color: '#77727f',
-  }
+  const current =
+    config[status] || {
+      label: status || 'Unknown',
+      background: '#f3f3f5',
+      color: '#77727f',
+    }
 
   return (
     <span
@@ -236,9 +259,9 @@ function StatusBadge({ status }) {
 }
 
 
-/* =========================================================
-   EMPTY STATE
-   ========================================================= */
+// =========================================================
+// EMPTY STATE
+// =========================================================
 
 function EmptyState({
   icon: Icon = FileText,
@@ -293,9 +316,38 @@ function EmptyState({
 }
 
 
-/* =========================================================
-   MAIN PAGE
-   ========================================================= */
+// =========================================================
+// SEARCH BOX
+// =========================================================
+
+function SearchBox({
+  value,
+  onChange,
+  placeholder,
+}) {
+  return (
+    <div style={styles.searchBox}>
+      <Search
+        size={17}
+        color="#8c86a0"
+      />
+
+      <input
+        value={value}
+        onChange={(event) =>
+          onChange(event.target.value)
+        }
+        placeholder={placeholder}
+        style={styles.searchInput}
+      />
+    </div>
+  )
+}
+
+
+// =========================================================
+// MAIN PAGE
+// =========================================================
 
 function PlacementOfficerDataPage({
   type,
@@ -309,23 +361,32 @@ function PlacementOfficerDataPage({
   } = useAuth()
 
   const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [search, setSearch] = useState('')
+  const [loading, setLoading] =
+    useState(true)
+
+  const [error, setError] =
+    useState('')
+
+  const [search, setSearch] =
+    useState('')
+
+  const [approvalAction, setApprovalAction] =
+    useState(null)
 
 
-  /* -------------------------------------------------------
-     LOAD DATA
-     ------------------------------------------------------- */
+  // =======================================================
+  // LOAD DATA
+  // =======================================================
 
   async function loadData() {
     try {
       setLoading(true)
       setError('')
 
-      const response = await api.get(
-        config.endpoint
-      )
+      const response =
+        await api.get(
+          config.endpoint
+        )
 
       setData(response.data)
     } catch (err) {
@@ -333,13 +394,51 @@ function PlacementOfficerDataPage({
 
       setError(
         err.response?.data?.detail ||
-          `Unable to load ${config.title.toLowerCase()}.`
+          'Unable to load the requested data.'
       )
     } finally {
       setLoading(false)
     }
   }
 
+
+  // =======================================================
+  // APPROVE / REJECT RECRUITER
+  // =======================================================
+
+  async function handleRecruiterApproval(
+    recruiterId,
+    action
+  ) {
+    try {
+      setApprovalAction({
+        recruiterId,
+        action,
+      })
+
+      setError('')
+
+      await api.patch(
+        `/placement-officer/recruiters/${recruiterId}/${action}`
+      )
+
+      await loadData()
+    } catch (err) {
+      console.error(err)
+
+      setError(
+        err.response?.data?.detail ||
+          'Unable to update recruiter approval status.'
+      )
+    } finally {
+      setApprovalAction(null)
+    }
+  }
+
+
+  // =======================================================
+  // INITIAL LOAD
+  // =======================================================
 
   useEffect(() => {
     if (
@@ -358,9 +457,9 @@ function PlacementOfficerDataPage({
   ])
 
 
-  /* -------------------------------------------------------
-     DATA
-     ------------------------------------------------------- */
+  // =======================================================
+  // DATA
+  // =======================================================
 
   const recruiters =
     data?.recruiters || []
@@ -372,9 +471,9 @@ function PlacementOfficerDataPage({
     data?.applications || []
 
 
-  /* -------------------------------------------------------
-     SEARCH — RECRUITERS
-     ------------------------------------------------------- */
+  // =======================================================
+  // SEARCH - RECRUITERS
+  // =======================================================
 
   const filteredRecruiters =
     useMemo(() => {
@@ -390,6 +489,7 @@ function PlacementOfficerDataPage({
           [
             recruiter.name,
             recruiter.email,
+            recruiter.position,
             ...(recruiter.companies || []),
           ]
             .filter(Boolean)
@@ -400,9 +500,9 @@ function PlacementOfficerDataPage({
     }, [recruiters, search])
 
 
-  /* -------------------------------------------------------
-     SEARCH — DRIVES
-     ------------------------------------------------------- */
+  // =======================================================
+  // SEARCH - DRIVES
+  // =======================================================
 
   const filteredDrives =
     useMemo(() => {
@@ -431,9 +531,9 @@ function PlacementOfficerDataPage({
     }, [drives, search])
 
 
-  /* -------------------------------------------------------
-     SEARCH — APPLICATIONS
-     ------------------------------------------------------- */
+  // =======================================================
+  // SEARCH - APPLICATIONS
+  // =======================================================
 
   const filteredApplications =
     useMemo(() => {
@@ -462,98 +562,93 @@ function PlacementOfficerDataPage({
     }, [applications, search])
 
 
-  /* =======================================================
-     DRIVE STATS
-     ======================================================= */
+  // =======================================================
+  // DRIVE STATS
+  // =======================================================
 
-  const driveStats = useMemo(
-    () => ({
-      total: drives.length,
+  const driveStats =
+    useMemo(
+      () => ({
+        total: drives.length,
 
-      open: drives.filter(
-        (item) =>
-          item.status === 'open'
-      ).length,
+        open: drives.filter(
+          (item) =>
+            item.status === 'open'
+        ).length,
 
-      applications:
-        drives.reduce(
-          (sum, item) =>
-            sum +
-            Number(
-              item.application_count || 0
-            ),
-          0
-        ),
+        applications:
+          drives.reduce(
+            (sum, item) =>
+              sum +
+              Number(
+                item.application_count || 0
+              ),
+            0
+          ),
 
-      selected:
-        drives.reduce(
-          (sum, item) =>
-            sum +
-            Number(
-              item.selected_count || 0
-            ),
-          0
-        ),
-    }),
-    [drives]
-  )
-
-
-  /* =======================================================
-     RECRUITER STATS
-     ======================================================= */
-
-  const recruiterStats = useMemo(
-    () => ({
-      total: recruiters.length,
-
-      companies:
-        recruiters.reduce(
-          (sum, item) =>
-            sum +
-            Number(
-              item.company_count || 0
-            ),
-          0
-        ),
-
-      openJobs:
-        recruiters.reduce(
-          (sum, item) =>
-            sum +
-            Number(
-              item.open_jobs || 0
-            ),
-          0
-        ),
-
-      applications:
-        recruiters.reduce(
-          (sum, item) =>
-            sum +
-            Number(
-              item.total_applications || 0
-            ),
-          0
-        ),
-    }),
-    [recruiters]
-  )
+        selected:
+          drives.reduce(
+            (sum, item) =>
+              sum +
+              Number(
+                item.selected_count || 0
+              ),
+            0
+          ),
+      }),
+      [drives]
+    )
 
 
-  /* =======================================================
-     APPLICATION STATS
+  // =======================================================
+  // RECRUITER STATS
+  // =======================================================
 
-     IMPORTANT:
-     These are calculated directly from the SAME
-     applications array shown in the table.
+  const recruiterStats =
+    useMemo(
+      () => ({
+        total: recruiters.length,
 
-     This prevents the old problem where the cards
-     and table displayed different numbers.
-     ======================================================= */
+        companies:
+          recruiters.reduce(
+            (sum, item) =>
+              sum +
+              Number(
+                item.company_count || 0
+              ),
+            0
+          ),
 
-  const applicationStats = useMemo(
-    () => {
+        openJobs:
+          recruiters.reduce(
+            (sum, item) =>
+              sum +
+              Number(
+                item.open_jobs || 0
+              ),
+            0
+          ),
+
+        applications:
+          recruiters.reduce(
+            (sum, item) =>
+              sum +
+              Number(
+                item.total_applications || 0
+              ),
+            0
+          ),
+      }),
+      [recruiters]
+    )
+
+
+  // =======================================================
+  // APPLICATION STATS
+  // =======================================================
+
+  const applicationStats =
+    useMemo(() => {
       const total =
         applications.length
 
@@ -602,14 +697,12 @@ function PlacementOfficerDataPage({
         selected,
         rejected,
       }
-    },
-    [applications]
-  )
+    }, [applications])
 
 
-  /* -------------------------------------------------------
-     AUTH LOADING
-     ------------------------------------------------------- */
+  // =======================================================
+  // AUTH LOADING
+  // =======================================================
 
   if (authLoading) {
     return (
@@ -642,9 +735,9 @@ function PlacementOfficerDataPage({
   }
 
 
-  /* =======================================================
-     PAGE
-     ======================================================= */
+  // =======================================================
+  // PAGE
+  // =======================================================
 
   return (
     <AppShell
@@ -659,7 +752,9 @@ function PlacementOfficerDataPage({
         {/* HEADER */}
 
         <section style={styles.header}>
+
           <div>
+
             <div style={styles.kicker}>
               PLACEMENT OFFICE
             </div>
@@ -671,6 +766,7 @@ function PlacementOfficerDataPage({
             <p style={styles.subtitle}>
               {config.subtitle}
             </p>
+
           </div>
 
           <button
@@ -701,6 +797,7 @@ function PlacementOfficerDataPage({
 
             Refresh
           </button>
+
         </section>
 
 
@@ -719,7 +816,9 @@ function PlacementOfficerDataPage({
 
         {type === 'recruiters' && (
           <>
-            <section style={styles.statsGrid}>
+            <section
+              style={styles.statsGrid}
+            >
 
               <StatCard
                 icon={Users}
@@ -761,8 +860,12 @@ function PlacementOfficerDataPage({
 
             <section style={styles.card}>
 
-              <div style={styles.cardHeader}>
+              <div
+                style={styles.cardHeader}
+              >
+
                 <div>
+
                   <h2
                     style={
                       styles.cardTitle
@@ -776,19 +879,25 @@ function PlacementOfficerDataPage({
                       styles.cardSubtitle
                     }
                   >
-                    {filteredRecruiters.length}{' '}
-                    {filteredRecruiters.length ===
-                    1
-                      ? 'recruiter'
-                      : 'recruiters'}
+                    {
+                      filteredRecruiters.length
+                    }{' '}
+                    {
+                      filteredRecruiters.length ===
+                      1
+                        ? 'recruiter'
+                        : 'recruiters'
+                    }
                   </p>
+
                 </div>
 
                 <SearchBox
                   value={search}
                   onChange={setSearch}
-                  placeholder="Search recruiters, companies..."
+                  placeholder="Search recruiters, companies or positions..."
                 />
+
               </div>
 
 
@@ -807,7 +916,7 @@ function PlacementOfficerDataPage({
                   title="No recruiters found"
                   description={
                     search
-                      ? 'Try a different recruiter or company name.'
+                      ? 'Try a different recruiter, company or position name.'
                       : 'Recruiter records will appear here when available.'
                   }
                 />
@@ -817,11 +926,15 @@ function PlacementOfficerDataPage({
                     styles.tableWrap
                   }
                 >
+
                   <table
                     style={styles.table}
                   >
+
                     <thead>
+
                       <tr>
+
                         <th>
                           RECRUITER
                         </th>
@@ -841,10 +954,22 @@ function PlacementOfficerDataPage({
                         <th>
                           SELECTED
                         </th>
+
+                        <th>
+                          STATUS
+                        </th>
+
+                        <th>
+                          ACTIONS
+                        </th>
+
                       </tr>
+
                     </thead>
 
+
                     <tbody>
+
                       {filteredRecruiters.map(
                         (recruiter) => (
                           <tr
@@ -853,12 +978,16 @@ function PlacementOfficerDataPage({
                             }
                           >
 
+                            {/* RECRUITER */}
+
                             <td>
+
                               <div
                                 style={
                                   styles.person
                                 }
                               >
+
                                 <div
                                   style={
                                     styles.avatar
@@ -869,14 +998,29 @@ function PlacementOfficerDataPage({
                                   )}
                                 </div>
 
-                                <div>
-                                  <strong>
+
+                                <div
+                                  style={
+                                    styles.personInfo
+                                  }
+                                >
+
+                                  <strong
+                                    style={
+                                      styles.personName
+                                    }
+                                  >
                                     {
                                       recruiter.name
                                     }
                                   </strong>
 
-                                  <span>
+
+                                  <span
+                                    style={
+                                      styles.personEmail
+                                    }
+                                  >
                                     <Mail
                                       size={13}
                                     />
@@ -885,17 +1029,39 @@ function PlacementOfficerDataPage({
                                       recruiter.email
                                     }
                                   </span>
+
+
+                                  {/* POSITION */}
+
+                                  {recruiter.position && (
+                                    <span
+                                      style={
+                                        styles.personPosition
+                                      }
+                                    >
+                                      {
+                                        recruiter.position
+                                      }
+                                    </span>
+                                  )}
+
                                 </div>
+
                               </div>
+
                             </td>
 
 
+                            {/* COMPANY */}
+
                             <td>
+
                               <div
                                 style={
                                   styles.companyCell
                                 }
                               >
+
                                 <Building2
                                   size={15}
                                 />
@@ -904,16 +1070,19 @@ function PlacementOfficerDataPage({
                                   {(
                                     recruiter.companies ||
                                     []
-                                  ).join(
-                                    ', '
-                                  ) ||
+                                  ).join(', ') ||
                                     'No company'}
                                 </span>
+
                               </div>
+
                             </td>
 
 
+                            {/* ROLES */}
+
                             <td>
+
                               <strong>
                                 {
                                   recruiter.open_jobs ||
@@ -933,25 +1102,34 @@ function PlacementOfficerDataPage({
                                   0
                                 }
                               </span>
+
                             </td>
 
 
+                            {/* APPLICATIONS */}
+
                             <td>
+
                               <strong>
                                 {
                                   recruiter.total_applications ||
                                   0
                                 }
                               </strong>
+
                             </td>
 
 
+                            {/* SELECTED */}
+
                             <td>
+
                               <span
                                 style={
                                   styles.selectedText
                                 }
                               >
+
                                 <CheckCircle2
                                   size={15}
                                 />
@@ -960,18 +1138,162 @@ function PlacementOfficerDataPage({
                                   recruiter.selected_candidates ||
                                   0
                                 }
+
                               </span>
+
+                            </td>
+
+
+                            {/* STATUS */}
+
+                            <td>
+
+                              <StatusBadge
+                                status={
+                                  recruiter.approval_status
+                                }
+                              />
+
+                            </td>
+
+
+                            {/* ACTIONS */}
+
+                            <td>
+
+                              {recruiter.approval_status ===
+                              'pending' ? (
+
+                                <div
+                                  style={
+                                    styles.approvalActions
+                                  }
+                                >
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleRecruiterApproval(
+                                        recruiter.recruiter_id,
+                                        'approve'
+                                      )
+                                    }
+                                    disabled={
+                                      approvalAction?.recruiterId ===
+                                      recruiter.recruiter_id
+                                    }
+                                    style={{
+                                      ...styles.approveButton,
+                                      opacity:
+                                        approvalAction?.recruiterId ===
+                                        recruiter.recruiter_id
+                                          ? 0.6
+                                          : 1,
+                                      cursor:
+                                        approvalAction?.recruiterId ===
+                                        recruiter.recruiter_id
+                                          ? 'not-allowed'
+                                          : 'pointer',
+                                    }}
+                                  >
+
+                                    {approvalAction?.recruiterId ===
+                                      recruiter.recruiter_id &&
+                                    approvalAction?.action ===
+                                      'approve' ? (
+                                      <LoaderCircle
+                                        size={14}
+                                        style={
+                                          styles.buttonSpinner
+                                        }
+                                      />
+                                    ) : (
+                                      <CheckCircle2
+                                        size={14}
+                                      />
+                                    )}
+
+                                    Approve
+
+                                  </button>
+
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleRecruiterApproval(
+                                        recruiter.recruiter_id,
+                                        'reject'
+                                      )
+                                    }
+                                    disabled={
+                                      approvalAction?.recruiterId ===
+                                      recruiter.recruiter_id
+                                    }
+                                    style={{
+                                      ...styles.rejectButton,
+                                      opacity:
+                                        approvalAction?.recruiterId ===
+                                        recruiter.recruiter_id
+                                          ? 0.6
+                                          : 1,
+                                      cursor:
+                                        approvalAction?.recruiterId ===
+                                        recruiter.recruiter_id
+                                          ? 'not-allowed'
+                                          : 'pointer',
+                                    }}
+                                  >
+
+                                    {approvalAction?.recruiterId ===
+                                      recruiter.recruiter_id &&
+                                    approvalAction?.action ===
+                                      'reject' ? (
+                                      <LoaderCircle
+                                        size={14}
+                                        style={
+                                          styles.buttonSpinner
+                                        }
+                                      />
+                                    ) : (
+                                      <XCircle
+                                        size={14}
+                                      />
+                                    )}
+
+                                    Reject
+
+                                  </button>
+
+                                </div>
+
+                              ) : (
+
+                                <span
+                                  style={
+                                    styles.noAction
+                                  }
+                                >
+                                  No action required
+                                </span>
+
+                              )}
+
                             </td>
 
                           </tr>
                         )
                       )}
+
                     </tbody>
+
                   </table>
+
                 </div>
               )}
 
             </section>
+
           </>
         )}
 
@@ -982,7 +1304,10 @@ function PlacementOfficerDataPage({
 
         {type === 'drives' && (
           <>
-            <section style={styles.statsGrid}>
+
+            <section
+              style={styles.statsGrid}
+            >
 
               <StatCard
                 icon={BriefcaseBusiness}
@@ -1024,8 +1349,12 @@ function PlacementOfficerDataPage({
 
             <section style={styles.card}>
 
-              <div style={styles.cardHeader}>
+              <div
+                style={styles.cardHeader}
+              >
+
                 <div>
+
                   <h2
                     style={
                       styles.cardTitle
@@ -1039,12 +1368,17 @@ function PlacementOfficerDataPage({
                       styles.cardSubtitle
                     }
                   >
-                    {filteredDrives.length}{' '}
-                    {filteredDrives.length ===
-                    1
-                      ? 'drive'
-                      : 'drives'}
+                    {
+                      filteredDrives.length
+                    }{' '}
+                    {
+                      filteredDrives.length ===
+                      1
+                        ? 'drive'
+                        : 'drives'
+                    }
                   </p>
+
                 </div>
 
                 <SearchBox
@@ -1052,10 +1386,12 @@ function PlacementOfficerDataPage({
                   onChange={setSearch}
                   placeholder="Search roles, companies..."
                 />
+
               </div>
 
 
               {loading ? (
+
                 <div
                   style={
                     styles.loading
@@ -1063,8 +1399,10 @@ function PlacementOfficerDataPage({
                 >
                   Loading placement drives...
                 </div>
+
               ) : filteredDrives.length ===
                 0 ? (
+
                 <EmptyState
                   icon={BriefcaseBusiness}
                   title="No placement drives found"
@@ -1074,17 +1412,23 @@ function PlacementOfficerDataPage({
                       : 'Placement drives will appear here when jobs are available.'
                   }
                 />
+
               ) : (
+
                 <div
                   style={
                     styles.tableWrap
                   }
                 >
+
                   <table
                     style={styles.table}
                   >
+
                     <thead>
+
                       <tr>
+
                         <th>
                           ROLE / DRIVE
                         </th>
@@ -1112,10 +1456,14 @@ function PlacementOfficerDataPage({
                         <th>
                           STATUS
                         </th>
+
                       </tr>
+
                     </thead>
 
+
                     <tbody>
+
                       {filteredDrives.map(
                         (drive) => (
                           <tr
@@ -1125,6 +1473,7 @@ function PlacementOfficerDataPage({
                           >
 
                             <td>
+
                               <strong
                                 style={
                                   styles.roleTitle
@@ -1140,8 +1489,10 @@ function PlacementOfficerDataPage({
                                   styles.subText
                                 }
                               >
-                                {drive.employment_type ||
-                                  'Employment type not specified'}
+                                {
+                                  drive.employment_type ||
+                                  'Employment type not specified'
+                                }
 
                                 {' · Drive #'}
 
@@ -1149,15 +1500,18 @@ function PlacementOfficerDataPage({
                                   drive.job_id
                                 }
                               </span>
+
                             </td>
 
 
                             <td>
+
                               <div
                                 style={
                                   styles.companyCell
                                 }
                               >
+
                                 <Building2
                                   size={15}
                                 />
@@ -1166,16 +1520,20 @@ function PlacementOfficerDataPage({
                                   drive.company_name ||
                                   'Unknown company'
                                 }
+
                               </div>
+
                             </td>
 
 
                             <td>
+
                               <div
                                 style={
                                   styles.companyCell
                                 }
                               >
+
                                 <MapPin
                                   size={15}
                                 />
@@ -1184,7 +1542,9 @@ function PlacementOfficerDataPage({
                                   drive.location ||
                                   'Not specified'
                                 }
+
                               </div>
+
                             </td>
 
 
@@ -1197,21 +1557,25 @@ function PlacementOfficerDataPage({
 
 
                             <td>
+
                               <strong>
                                 {
                                   drive.application_count ||
                                   0
                                 }
                               </strong>
+
                             </td>
 
 
                             <td>
+
                               <div
                                 style={
                                   styles.pipeline
                                 }
                               >
+
                                 <span>
                                   {
                                     drive.shortlisted_count ||
@@ -1235,27 +1599,35 @@ function PlacementOfficerDataPage({
                                   }{' '}
                                   selected
                                 </span>
+
                               </div>
+
                             </td>
 
 
                             <td>
+
                               <StatusBadge
                                 status={
                                   drive.status
                                 }
                               />
+
                             </td>
 
                           </tr>
                         )
                       )}
+
                     </tbody>
+
                   </table>
+
                 </div>
               )}
 
             </section>
+
           </>
         )}
 
@@ -1266,7 +1638,10 @@ function PlacementOfficerDataPage({
 
         {type === 'applications' && (
           <>
-            <section style={styles.statsGrid}>
+
+            <section
+              style={styles.statsGrid}
+            >
 
               <StatCard
                 icon={FileText}
@@ -1308,8 +1683,12 @@ function PlacementOfficerDataPage({
 
             <section style={styles.card}>
 
-              <div style={styles.cardHeader}>
+              <div
+                style={styles.cardHeader}
+              >
+
                 <div>
+
                   <h2
                     style={
                       styles.cardTitle
@@ -1323,12 +1702,17 @@ function PlacementOfficerDataPage({
                       styles.cardSubtitle
                     }
                   >
-                    {filteredApplications.length}{' '}
-                    {filteredApplications.length ===
-                    1
-                      ? 'application'
-                      : 'applications'}
+                    {
+                      filteredApplications.length
+                    }{' '}
+                    {
+                      filteredApplications.length ===
+                      1
+                        ? 'application'
+                        : 'applications'
+                    }
                   </p>
+
                 </div>
 
                 <SearchBox
@@ -1336,10 +1720,12 @@ function PlacementOfficerDataPage({
                   onChange={setSearch}
                   placeholder="Search candidates, roles, companies..."
                 />
+
               </div>
 
 
               {loading ? (
+
                 <div
                   style={
                     styles.loading
@@ -1347,8 +1733,10 @@ function PlacementOfficerDataPage({
                 >
                   Loading applications...
                 </div>
+
               ) : filteredApplications.length ===
                 0 ? (
+
                 <EmptyState
                   icon={FileText}
                   title="No applications found"
@@ -1358,17 +1746,23 @@ function PlacementOfficerDataPage({
                       : 'Candidate applications will appear here.'
                   }
                 />
+
               ) : (
+
                 <div
                   style={
                     styles.tableWrap
                   }
                 >
+
                   <table
                     style={styles.table}
                   >
+
                     <thead>
+
                       <tr>
+
                         <th>
                           CANDIDATE
                         </th>
@@ -1388,10 +1782,14 @@ function PlacementOfficerDataPage({
                         <th>
                           STATUS
                         </th>
+
                       </tr>
+
                     </thead>
 
+
                     <tbody>
+
                       {filteredApplications.map(
                         (application) => (
                           <tr
@@ -1401,11 +1799,13 @@ function PlacementOfficerDataPage({
                           >
 
                             <td>
+
                               <div
                                 style={
                                   styles.person
                                 }
                               >
+
                                 <div
                                   style={
                                     styles.avatar
@@ -1416,14 +1816,30 @@ function PlacementOfficerDataPage({
                                   )}
                                 </div>
 
-                                <div>
-                                  <strong>
+
+                                <div
+                                  style={
+                                    styles.personInfo
+                                  }
+                                >
+
+                                  <strong
+                                    style={
+                                      styles.personName
+                                    }
+                                  >
                                     {
                                       application.candidate_name
                                     }
                                   </strong>
 
-                                  <span>
+
+                                  <span
+                                    style={
+                                      styles.personEmail
+                                    }
+                                  >
+
                                     <Mail
                                       size={13}
                                     />
@@ -1432,10 +1848,17 @@ function PlacementOfficerDataPage({
                                       application.candidate_email ||
                                       'Email unavailable'
                                     }
+
                                   </span>
 
+
                                   {application.candidate_location && (
-                                    <span>
+                                    <span
+                                      style={
+                                        styles.personLocation
+                                      }
+                                    >
+
                                       <MapPin
                                         size={13}
                                       />
@@ -1443,14 +1866,19 @@ function PlacementOfficerDataPage({
                                       {
                                         application.candidate_location
                                       }
+
                                     </span>
                                   )}
+
                                 </div>
+
                               </div>
+
                             </td>
 
 
                             <td>
+
                               <strong
                                 style={
                                   styles.roleTitle
@@ -1460,15 +1888,18 @@ function PlacementOfficerDataPage({
                                   application.job_title
                                 }
                               </strong>
+
                             </td>
 
 
                             <td>
+
                               <div
                                 style={
                                   styles.companyCell
                                 }
                               >
+
                                 <Building2
                                   size={15}
                                 />
@@ -1477,34 +1908,44 @@ function PlacementOfficerDataPage({
                                   application.company_name ||
                                   'Unknown company'
                                 }
+
                               </div>
+
                             </td>
 
 
                             <td>
+
                               {formatDate(
                                 application.applied_at
                               )}
+
                             </td>
 
 
                             <td>
+
                               <StatusBadge
                                 status={
                                   application.status
                                 }
                               />
+
                             </td>
 
                           </tr>
                         )
                       )}
+
                     </tbody>
+
                   </table>
+
                 </div>
               )}
 
             </section>
+
           </>
         )}
 
@@ -1514,38 +1955,9 @@ function PlacementOfficerDataPage({
 }
 
 
-/* =========================================================
-   SEARCH BOX
-   ========================================================= */
-
-function SearchBox({
-  value,
-  onChange,
-  placeholder,
-}) {
-  return (
-    <div style={styles.searchBox}>
-      <Search
-        size={17}
-        color="#8c86a0"
-      />
-
-      <input
-        value={value}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
-        placeholder={placeholder}
-        style={styles.searchInput}
-      />
-    </div>
-  )
-}
-
-
-/* =========================================================
-   HELPERS
-   ========================================================= */
+// =========================================================
+// HELPERS
+// =========================================================
 
 function getInitials(name) {
   if (!name) {
@@ -1586,11 +1998,12 @@ function formatDate(value) {
 }
 
 
-/* =========================================================
-   STYLES
-   ========================================================= */
+// =========================================================
+// STYLES
+// =========================================================
 
 const styles = {
+
   page: {
     width: '100%',
     maxWidth: 1320,
@@ -1722,13 +2135,69 @@ const styles = {
   table: {
     width: '100%',
     borderCollapse: 'collapse',
-    minWidth: 900,
+    minWidth: 1260,
+    tableLayout: 'auto',
   },
 
   person: {
     display: 'flex',
     alignItems: 'center',
-    gap: 11,
+    gap: 12,
+    minWidth: 255,
+  },
+
+  personInfo: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+    minWidth: 0,
+  },
+
+  personName: {
+    display: 'block',
+    color: '#302b3b',
+    fontSize: 13,
+    fontWeight: 750,
+    lineHeight: 1.3,
+    whiteSpace: 'nowrap',
+  },
+
+  personEmail: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+    color: '#918a9d',
+    fontSize: 11,
+    lineHeight: 1.2,
+    whiteSpace: 'nowrap',
+  },
+
+  /* =======================================================
+     NEW: RECRUITER POSITION
+     ======================================================= */
+
+  personPosition: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    width: 'fit-content',
+    color: '#6657e8',
+    background: '#f3f0ff',
+    borderRadius: 6,
+    padding: '3px 7px',
+    fontSize: 10,
+    fontWeight: 750,
+    lineHeight: 1.2,
+    whiteSpace: 'nowrap',
+  },
+
+  personLocation: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+    color: '#aaa4b2',
+    fontSize: 10,
+    lineHeight: 1.2,
+    whiteSpace: 'nowrap',
   },
 
   avatar: {
@@ -1749,6 +2218,7 @@ const styles = {
     alignItems: 'center',
     gap: 7,
     color: '#686274',
+    whiteSpace: 'nowrap',
   },
 
   selectedText: {
@@ -1797,17 +2267,64 @@ const styles = {
     placeItems: 'center',
     color: '#77727f',
   },
+
+  approvalActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    whiteSpace: 'nowrap',
+    minWidth: 155,
+  },
+
+  approveButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    border: '1px solid #cce8d8',
+    background: '#edf9f2',
+    color: '#218653',
+    borderRadius: 8,
+    padding: '7px 10px',
+    fontSize: 11,
+    fontWeight: 750,
+  },
+
+  rejectButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    border: '1px solid #f0d2d2',
+    background: '#fff1f1',
+    color: '#c75252',
+    borderRadius: 8,
+    padding: '7px 10px',
+    fontSize: 11,
+    fontWeight: 750,
+  },
+
+  noAction: {
+    color: '#aaa4b2',
+    fontSize: 11,
+    whiteSpace: 'nowrap',
+  },
+
+  buttonSpinner: {
+    animation:
+      'spin 1s linear infinite',
+  },
 }
 
 
-/* =========================================================
-   TABLE CSS
-   ========================================================= */
+// =========================================================
+// TABLE CSS
+// =========================================================
 
 const tableStyle = `
   th {
     text-align: left;
-    padding: 12px 20px;
+    padding: 13px 22px;
     background: #faf9fc;
     color: #8a8495;
     font-size: 10px;
@@ -1818,7 +2335,7 @@ const tableStyle = `
   }
 
   td {
-    padding: 16px 20px;
+    padding: 17px 22px;
     border-bottom: 1px solid #f0edf3;
     color: #686274;
     font-size: 12px;
@@ -1831,6 +2348,15 @@ const tableStyle = `
 
   tbody tr:hover {
     background: #fcfbfe;
+  }
+
+  button {
+    font-family: inherit;
+  }
+
+  button:focus-visible {
+    outline: 2px solid #6657e8;
+    outline-offset: 2px;
   }
 
   @keyframes spin {
@@ -1850,9 +2376,11 @@ const tableStyle = `
   }
 `
 
-/*
-  Inject the table CSS once.
-*/
+
+// =========================================================
+// INJECT TABLE CSS
+// =========================================================
+
 if (
   typeof document !== 'undefined' &&
   !document.getElementById(

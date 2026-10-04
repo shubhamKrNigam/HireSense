@@ -13,6 +13,7 @@ class TokenResponse(BaseModel):
     name: str
     email: str
     role: str
+    position: str | None = None
 
 
 class ChangePasswordRequest(BaseModel):

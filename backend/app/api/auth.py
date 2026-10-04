@@ -32,9 +32,13 @@ def login(
     login_data: LoginRequest,
     db: Session = Depends(get_db),
 ):
-    user = db.query(User).filter(
-        User.email == login_data.email
-    ).first()
+    user = (
+        db.query(User)
+        .filter(
+            User.email == login_data.email
+        )
+        .first()
+    )
 
     if not user:
         raise HTTPException(
@@ -64,6 +68,7 @@ def login(
         "name": user.name,
         "email": user.email,
         "role": user.role,
+        "position": user.position,
     }
 
 
@@ -76,6 +81,7 @@ def get_me(
         "name": current_user.name,
         "email": current_user.email,
         "role": current_user.role,
+        "position": current_user.position,
     }
 
 

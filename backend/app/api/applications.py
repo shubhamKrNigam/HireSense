@@ -18,6 +18,8 @@ from app.models.user import User
 
 from app.services.matching import calculate_match
 
+from app.services.notification_service import create_notification
+
 from app.schemas.application import (
     ApplicationCreate,
     ApplicationResponse,

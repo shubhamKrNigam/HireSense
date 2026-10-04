@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  Bell,
   ChevronDown,
   Search,
   Settings,
@@ -13,6 +12,8 @@ import {
 } from 'react-router-dom'
 
 import Sidebar from './Sidebar'
+import NotificationBell from '../notifications/NotificationBell'
+
 import { useAuth } from '../../context/AuthContext'
 
 function AppShell({
@@ -29,18 +30,40 @@ function AppShell({
 
   const profileRef = useRef(null)
 
-  const isCandidate = role === 'candidate'
-  const isRecruiter = role === 'recruiter'
+  // =========================================================
+  // ROLE DETECTION
+  // =========================================================
+
+  const normalizedRole = String(role || '')
+    .toLowerCase()
+    .trim()
+
+  const isCandidate =
+    normalizedRole === 'candidate'
+
+  const isRecruiter =
+    normalizedRole === 'recruiter'
+
   const isPlacementOfficer =
-    role === 'placement_officer'
+    normalizedRole === 'placement_officer' ||
+    normalizedRole === 'placement-officer' ||
+    normalizedRole === 'placement officer'
+
+  const isAdmin =
+    normalizedRole === 'admin' ||
+    normalizedRole === 'administrator'
 
   // =========================================================
-  // ROLE CONFIGURATION
+  // PROFILE PATH
   // =========================================================
 
   const profilePath = isCandidate
     ? '/candidate/profile'
     : '/settings'
+
+  // =========================================================
+  // SEARCH PLACEHOLDER
+  // =========================================================
 
   const searchPlaceholder = isCandidate
     ? 'Search jobs, skills...'
@@ -48,7 +71,13 @@ function AppShell({
       ? 'Search candidates, jobs...'
       : isPlacementOfficer
         ? 'Search candidates, drives...'
-        : 'Search...'
+        : isAdmin
+          ? 'Search users, jobs, companies...'
+          : 'Search...'
+
+  // =========================================================
+  // ROLE LABEL
+  // =========================================================
 
   const roleLabel = isCandidate
     ? 'Candidate'
@@ -56,7 +85,9 @@ function AppShell({
       ? 'Recruiter'
       : isPlacementOfficer
         ? 'Placement Officer'
-        : 'User'
+        : isAdmin
+          ? 'Administrator'
+          : 'User'
 
   // =========================================================
   // KEEP SEARCH IN SYNC WITH URL
@@ -129,7 +160,10 @@ function AppShell({
 
     const query = searchValue.trim()
 
-    // Empty search
+    // -------------------------------------------------------
+    // EMPTY SEARCH
+    // -------------------------------------------------------
+
     if (!query) {
       if (isCandidate) {
         navigate('/candidate/jobs')
@@ -146,14 +180,26 @@ function AppShell({
         return
       }
 
+      if (isAdmin) {
+        navigate('/admin')
+        return
+      }
+
       navigate('/')
       return
     }
 
+    // -------------------------------------------------------
+    // ENCODE QUERY
+    // -------------------------------------------------------
+
     const encodedQuery =
       encodeURIComponent(query)
 
-    // Candidate search
+    // -------------------------------------------------------
+    // CANDIDATE SEARCH
+    // -------------------------------------------------------
+
     if (isCandidate) {
       navigate(
         `/candidate/jobs?search=${encodedQuery}`
@@ -161,7 +207,10 @@ function AppShell({
       return
     }
 
-    // Recruiter search
+    // -------------------------------------------------------
+    // RECRUITER SEARCH
+    // -------------------------------------------------------
+
     if (isRecruiter) {
       navigate(
         `/recruiter/applications?search=${encodedQuery}`
@@ -169,10 +218,24 @@ function AppShell({
       return
     }
 
-    // Placement Officer search
+    // -------------------------------------------------------
+    // PLACEMENT OFFICER SEARCH
+    // -------------------------------------------------------
+
     if (isPlacementOfficer) {
       navigate(
         `/placement-officer?search=${encodedQuery}`
+      )
+      return
+    }
+
+    // -------------------------------------------------------
+    // ADMIN SEARCH
+    // -------------------------------------------------------
+
+    if (isAdmin) {
+      navigate(
+        `/admin?search=${encodedQuery}`
       )
       return
     }
@@ -215,6 +278,15 @@ function AppShell({
   }
 
   // =========================================================
+  // AVATAR INITIAL
+  // =========================================================
+
+  const avatarInitial =
+    (userName || 'U')
+      .charAt(0)
+      .toUpperCase()
+
+  // =========================================================
   // RENDER
   // =========================================================
 
@@ -235,11 +307,16 @@ function AppShell({
 
         <header className="hs-topbar">
 
+          {/* =================================================
+              SEARCH
+          ================================================== */}
+
           <form
             className="hs-search"
             onSubmit={handleSearchSubmit}
             role="search"
           >
+
             <Search size={18} />
 
             <input
@@ -257,24 +334,36 @@ function AppShell({
                 searchPlaceholder
               }
             />
+
           </form>
+
+          {/* =================================================
+              TOPBAR RIGHT
+          ================================================== */}
 
           <div className="hs-topbar-right">
 
-            {/* Notifications */}
+            {/* ===============================================
+                NOTIFICATION BELL
 
-            <button
-              type="button"
-              className="hs-icon-button"
-              aria-label="Notifications"
-              title="Notifications"
-            >
-              <Bell size={19} />
+                IMPORTANT:
+                NotificationBell handles:
+                - bell icon
+                - unread count
+                - notification dropdown
+                - mark as read
+                - mark all as read
+                - GET /notifications
+                - GET /notifications/unread-count
 
-              <span className="hs-notification-dot" />
-            </button>
+                It is intentionally shared by every role.
+            ================================================ */}
 
-            {/* User Menu */}
+            <NotificationBell />
+
+            {/* ===============================================
+                USER MENU
+            ================================================ */}
 
             <div
               className="hs-user-menu"
@@ -298,11 +387,13 @@ function AppShell({
                 aria-label="Open profile menu"
               >
 
+                {/* Avatar */}
+
                 <div className="hs-avatar">
-                  {(userName || 'U')
-                    .charAt(0)
-                    .toUpperCase()}
+                  {avatarInitial}
                 </div>
+
+                {/* User information */}
 
                 <div className="hs-user-info">
 
@@ -316,6 +407,8 @@ function AppShell({
 
                 </div>
 
+                {/* Dropdown arrow */}
+
                 <ChevronDown
                   size={15}
                   className="hs-user-chevron"
@@ -323,18 +416,24 @@ function AppShell({
 
               </button>
 
+              {/* =============================================
+                  PROFILE DROPDOWN
+              ============================================== */}
+
               {profileOpen && (
                 <div
                   className="hs-profile-menu"
                   role="menu"
                 >
 
+                  {/* -----------------------------------------
+                      PROFILE HEADER
+                  ------------------------------------------ */}
+
                   <div className="hs-profile-menu-header">
 
                     <div className="hs-profile-menu-avatar">
-                      {(userName || 'U')
-                        .charAt(0)
-                        .toUpperCase()}
+                      {avatarInitial}
                     </div>
 
                     <div>
@@ -353,14 +452,19 @@ function AppShell({
 
                   <div className="hs-profile-menu-divider" />
 
-                  {/* Profile */}
+                  {/* -----------------------------------------
+                      PROFILE
+                  ------------------------------------------ */}
 
                   <button
                     type="button"
                     className="hs-profile-menu-item"
-                    onClick={openProfile}
+                    onClick={
+                      openProfile
+                    }
                     role="menuitem"
                   >
+
                     <UserRound size={16} />
 
                     <span>
@@ -368,38 +472,51 @@ function AppShell({
                         ? 'My Profile'
                         : 'My Account'}
                     </span>
+
                   </button>
 
-                  {/* Settings */}
+                  {/* -----------------------------------------
+                      SETTINGS
+                  ------------------------------------------ */}
 
                   <button
                     type="button"
                     className="hs-profile-menu-item"
-                    onClick={openSettings}
+                    onClick={
+                      openSettings
+                    }
                     role="menuitem"
                   >
+
                     <Settings size={16} />
 
                     <span>
                       Settings
                     </span>
+
                   </button>
 
                   <div className="hs-profile-menu-divider" />
 
-                  {/* Sign out */}
+                  {/* -----------------------------------------
+                      SIGN OUT
+                  ------------------------------------------ */}
 
                   <button
                     type="button"
                     className="hs-profile-menu-item hs-profile-menu-signout"
-                    onClick={handleSignOut}
+                    onClick={
+                      handleSignOut
+                    }
                     role="menuitem"
                   >
+
                     <LogOut size={16} />
 
                     <span>
                       Sign out
                     </span>
+
                   </button>
 
                 </div>

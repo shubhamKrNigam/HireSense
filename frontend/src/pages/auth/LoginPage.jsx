@@ -6,6 +6,8 @@ import {
   LockKeyhole,
   Mail,
   Sparkles,
+  KeyRound,
+  UserPlus,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
@@ -26,17 +28,27 @@ function LoginPage() {
     event.preventDefault()
 
     setError('')
+
+    const trimmedEmail = email.trim()
+
+    if (!trimmedEmail) {
+      setError('Please enter your email address.')
+      return
+    }
+
+    if (!password) {
+      setError('Please enter your password.')
+      return
+    }
+
     setLoading(true)
 
     try {
       const data = await login(
-        email.trim(),
+        trimmedEmail,
         password,
       )
 
-      /*
-       * Role-based navigation
-       */
       switch (data.role) {
         case 'candidate':
           navigate('/candidate', {
@@ -83,6 +95,7 @@ function LoginPage() {
   return (
     <div className="hs-login-page">
 
+      {/* BACKGROUND */}
       <div className="hs-login-background">
         <div className="hs-glow hs-glow-one" />
         <div className="hs-glow hs-glow-two" />
@@ -90,13 +103,14 @@ function LoginPage() {
 
       <div className="hs-login-layout">
 
-        {/* ================================================= */}
-        {/* LEFT BRANDING PANEL */}
-        {/* ================================================= */}
+        {/* =====================================================
+            LEFT BRANDING
+        ===================================================== */}
 
         <section className="hs-login-intro">
 
           <div className="hs-login-brand">
+
             <div className="hs-login-logo">
               <Sparkles size={21} />
             </div>
@@ -105,9 +119,11 @@ function LoginPage() {
               <strong>HireSense</strong>
               <span>Placement Intelligence</span>
             </div>
+
           </div>
 
           <div className="hs-login-headline">
+
             <span className="hs-login-eyebrow">
               AI-powered career intelligence
             </span>
@@ -123,9 +139,11 @@ function LoginPage() {
               skills, experience, education, and career
               profile.
             </p>
+
           </div>
 
           <div className="hs-login-feature">
+
             <div className="hs-feature-icon">
               <Sparkles size={17} />
             </div>
@@ -140,23 +158,32 @@ function LoginPage() {
                 matches your profile.
               </span>
             </div>
+
           </div>
 
         </section>
 
-        {/* ================================================= */}
-        {/* LOGIN CARD */}
-        {/* ================================================= */}
+
+        {/* =====================================================
+            LOGIN CARD
+        ===================================================== */}
 
         <section className="hs-login-card">
 
+          {/* Mobile brand */}
+
           <div className="hs-mobile-brand">
+
             <div className="hs-login-logo">
               <Sparkles size={19} />
             </div>
 
             <strong>HireSense</strong>
+
           </div>
+
+
+          {/* Header */}
 
           <div className="hs-login-header">
 
@@ -175,9 +202,8 @@ function LoginPage() {
 
           </div>
 
-          {/* ================================================= */}
-          {/* ERROR */}
-          {/* ================================================= */}
+
+          {/* Error */}
 
           {error && (
             <div
@@ -188,9 +214,10 @@ function LoginPage() {
             </div>
           )}
 
-          {/* ================================================= */}
-          {/* LOGIN FORM */}
-          {/* ================================================= */}
+
+          {/* =====================================================
+              LOGIN FORM
+          ===================================================== */}
 
           <form
             className="hs-login-form"
@@ -201,7 +228,7 @@ function LoginPage() {
 
             <div className="hs-field">
 
-              <label htmlFor="email">
+              <label htmlFor="login-email">
                 Email address
               </label>
 
@@ -210,7 +237,7 @@ function LoginPage() {
                 <Mail size={17} />
 
                 <input
-                  id="email"
+                  id="login-email"
                   type="email"
                   value={email}
                   onChange={(event) =>
@@ -226,20 +253,37 @@ function LoginPage() {
 
             </div>
 
+
             {/* PASSWORD */}
 
             <div className="hs-field">
 
-              <label htmlFor="password">
-                Password
-              </label>
+              <div className="hs-password-label-row">
+
+                <label htmlFor="login-password">
+                  Password
+                </label>
+
+                <button
+                  type="button"
+                  className="hs-forgot-link"
+                  onClick={() =>
+                    navigate('/forgot-password')
+                  }
+                  disabled={loading}
+                >
+                  Forgot password?
+                </button>
+
+              </div>
+
 
               <div className="hs-input-wrapper">
 
                 <LockKeyhole size={17} />
 
                 <input
-                  id="password"
+                  id="login-password"
                   type={
                     showPassword
                       ? 'text'
@@ -281,7 +325,8 @@ function LoginPage() {
 
             </div>
 
-            {/* SUBMIT */}
+
+            {/* SIGN IN */}
 
             <button
               type="submit"
@@ -304,10 +349,41 @@ function LoginPage() {
 
           </form>
 
+
+          {/* =====================================================
+              CREATE ACCOUNT
+          ===================================================== */}
+
+          <div className="hs-auth-register">
+
+            <div className="hs-auth-register-text">
+              <span>
+                Don't have an account?
+              </span>
+
+              <button
+                type="button"
+                className="hs-auth-link-button"
+                onClick={() =>
+                  navigate('/register')
+                }
+              >
+                <UserPlus size={14} />
+                Create an account
+              </button>
+            </div>
+
+          </div>
+
+
+          {/* FOOTER */}
+
           <div className="hs-login-footer">
+
             <span>
               HireSense Placement Intelligence Platform
             </span>
+
           </div>
 
         </section>
